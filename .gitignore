@@ -18,6 +18,5 @@ Cir_s5/
 !phases.npz
 *.zip
 *.xoj
-
-# PyCharm
+*.swp
 .idea

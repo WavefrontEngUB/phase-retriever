@@ -20,6 +20,8 @@ def get_polarimetric_names(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
     filenames = os.listdir(folder)
     filenames.sort()
     polarimetric_sets = {}
+    pol_idx = None  # just an initialization
+    z_idx = None  # just an initialization
     for fname in filenames:
         # Try to get the fname and ftype. If not divisible, get out
         try:
@@ -36,30 +38,44 @@ def get_polarimetric_names(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
             continue
 
         if len(fields) < 3:
-            continue # Not a valid filename!
+            continue  # Not a valid filename!
+
+        # Get the index for the analyzer field
+        if pol_idx is None:
+            for idx, field in enumerate(fields):
+                if field in pol_keys.values():
+                    pol_idx = idx
+                    break
+
+        # Get the index for the z field
+        if z_idx is None:
+            for idx, field in enumerate(fields):
+                if field.startswith("z"):
+                    z_idx = idx
+                    break
 
         # Check if the dict for the distance already exists
-        z = int(fields[1][1:])
+        z = int(fields[z_idx][1:])
         complete_fname = f"{folder}/{fname}"
         if z not in polarimetric_sets:
             polarimetric_sets[z] = {}
-        if fields[2] == pol_keys[0]:
+        if fields[pol_idx] == pol_keys[0]:
             polarimetric_sets[z][0] = complete_fname
-            polarimetric_sets[z]["f"] = float(fields[-1][1:])
+            polarimetric_sets[z]["f"] = float(fields[z_idx][1:])
 
-        elif fields[2] == pol_keys[1]:
+        elif fields[pol_idx] == pol_keys[1]:
             polarimetric_sets[z][1] = complete_fname
             
-        elif fields[2] == pol_keys[2]:
+        elif fields[pol_idx] == pol_keys[2]:
             polarimetric_sets[z][2] = complete_fname
 
-        elif fields[2] == pol_keys[3]:
+        elif fields[pol_idx] == pol_keys[3]:
             polarimetric_sets[z][3] = complete_fname
 
-        elif fields[2] == pol_keys[4]:
+        elif fields[pol_idx] == pol_keys[4]:
             polarimetric_sets[z][4] = complete_fname
             
-        elif fields[2] == pol_keys[5]:
+        elif fields[pol_idx] == pol_keys[5]:
             polarimetric_sets[z][5] = complete_fname
         polarimetric_sets[z]["scale"] = 1e-3
     return polarimetric_sets

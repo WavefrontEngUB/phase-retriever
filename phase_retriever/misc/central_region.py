@@ -7,7 +7,7 @@ def find_rect_region(array: np.ndarray , dim: int):
     try:
         ny, nx = array.shape
     except:
-        ValueError("Input array must be 2D")
+        raise ValueError("Input array must be 2D")
     # Create an array with a centered rectangle
     rect = np.zeros((ny, nx), dtype=np.complex_)
     rect[(ny-dim//2)//2:(ny+dim//2)//2,
