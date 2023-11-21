@@ -73,19 +73,19 @@ class SinglePhaseRetriever():
         # TODO: Check types correctly
         self.config(**{key:value})
 
-    def load_dataset(self, path=None):
+    def load_dataset(self, path=None, ftype="png"):
         self.irradiance = None
         self.images = {}
         # If the user does not input a path
         if not path:
             # If there is no path already inputted
-            if not self["path"]:
+            if not self.get("path"):
                 raise ValueError("Dataset path must be specified")
             else:
-                path = self["path"]
+                path = self.get("path")
         else:
             self.options["path"] = path
-        self.polarimetric_sets = get_polarimetric_names(path)
+        self.polarimetric_sets = get_polarimetric_names(path, ftype=ftype)
         if not self.polarimetric_sets:
             raise ValueError(f"Cannot load polarimetric images from {path}")
 
@@ -96,7 +96,10 @@ class SinglePhaseRetriever():
                 if type(polarization) != int:
                     continue
                 path = self.polarimetric_sets[z][polarization]
-                image = imageio.imread(path)
+                if ftype == "npy":
+                    image = np.load(path)
+                else:
+                    image = imageio.imread(path)
                 self.images[z][polarization] = image.astype(np.float64)
 
         # Compute irradiance
@@ -140,6 +143,12 @@ class SinglePhaseRetriever():
                     self.cropped_irradiance += cropped
             first = False
         # And that's THA'
+
+    def get_images(self, z_idx=None, crop=True):
+        imgs = self.images if not crop else self.cropped
+        zetes = list(imgs.keys())
+        z_idx = z_idx if z_idx is not None else 0
+        return list(imgs[zetes[z_idx]].values())
 
     def center_window(self):
         """Center the window of size dim X dim on the region with the most energy content."""
