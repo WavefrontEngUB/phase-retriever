@@ -5,7 +5,7 @@ import imageio
 
 from .algorithm import multi
 from .misc.radial import get_function_radius
-from .misc.file_selector import get_polarimetric_names
+from .misc.file_selector import get_polarimetric_names, get_polarimetric_npz
 from .misc.central_region import find_rect_region
 from .misc.stokes import get_stokes_parameters
 
@@ -46,25 +46,24 @@ def lowpass_filter(bw, *amps):
 
 class SinglePhaseRetriever():
     # TODO: Crea una classe que encapsuli completament el mètode de recuperació de fase
-    options = {
+    def __init__(self, n_max=200):
+        self.options = {
             "pixel_size":None,  # MUST BE SCALED ACCORDING TO THE WAVELENGTH
             "dim"       :256,
             "rect"      :None,
-            "n_max"     :200,
+            "n_max"     :n_max,
             "eps"       :0.01,
             "bandwidth" :None,
             "origin"    :None,
             "lamb"      :None,
             "path"      :None
             }
-    irradiance = None
-    images = {}
-    cropped = {}
-    cropped_irradiance = None
-    a_ft = None
-    mse = [[], []]
-    def __init__(self, n_max=200):
-        self.options["n_max"] = n_max          # Maximum number of iterations
+        self.irradiance = None
+        self.images = {}
+        self.cropped = {}
+        self.cropped_irradiance = None
+        self.a_ft = None
+        self.mse = [[], []]
 
     def __getitem__(self, key):
         return self.options[key]
@@ -73,7 +72,7 @@ class SinglePhaseRetriever():
         # TODO: Check types correctly
         self.config(**{key:value})
 
-    def load_dataset(self, path=None):
+    def load_dataset(self, path=None, kind="png"):
         self.irradiance = None
         self.images = {}
         # If the user does not input a path
@@ -85,7 +84,11 @@ class SinglePhaseRetriever():
                 path = self["path"]
         else:
             self.options["path"] = path
-        self.polarimetric_sets = get_polarimetric_names(path)
+        
+        if kind == "png":
+            self.polarimetric_sets = get_polarimetric_names(path)
+        elif kind == "npz":
+            self.polarimetric_sets = get_polarimetric_npz(path)
         if not self.polarimetric_sets:
             raise ValueError(f"Cannot load polarimetric images from {path}")
 
@@ -227,6 +230,7 @@ class SinglePhaseRetriever():
         # Finally, we create an initial guess for the phase of both components
         #phi_0 = np.zeros((n, n))
         phi_0 = np.random.rand(n, n)
+        #phi_0 = np.arctan2(x, y)
 
         # We set up the multiprocessing environment. Just two processes, as we have two phases to recover
         self.queues = [mp.Queue(), mp.Queue()]
@@ -236,11 +240,12 @@ class SinglePhaseRetriever():
         self.reals = [mp.Array("d", range(0, int(n**2))), mp.Array("d", range(0, int(n**2)))]
         self.imags = [mp.Array("d", range(0, int(n**2))), mp.Array("d", range(0, int(n**2)))]
         # List with each of the processes, to keep track of them
+        eps = self["eps"]
         self.processes = \
                 [mp.Process(target=multi, args=(H, self.options["n_max"], phi_0, *A_x),
-                    kwargs={"queue":self.queues[0], "real":self.reals[0], "imag":self.imags[0]}),
+                    kwargs={"queue":self.queues[0], "real":self.reals[0], "imag":self.imags[0], "eps":eps}),
                  mp.Process(target=multi, args=(H, self.options["n_max"], phi_0, *A_y),
-                    kwargs={"queue":self.queues[1], "real":self.reals[1], "imag":self.imags[1]})]
+                     kwargs={"queue":self.queues[1], "real":self.reals[1], "imag":self.imags[1], "eps":eps})]
         # Begin monitoring
         if monitor:
             self.monitor_process(*args)
@@ -279,7 +284,7 @@ class SinglePhaseRetriever():
         # The phase origin will correspond to the value of the phase where the maximum of irradiance lies
         origin = self.options["origin"]
         delta_0 = delta[origin[0], origin[1]]
-        e_delta_0 = np.exp(1j*delta_0)
+        e_delta_0 = np.exp(-1j*delta_0) # -1j Seems to be THE RIGHT WAY(TM) to do it
 
         exphi_x /= exphi_x[origin[0], origin[1]]
         exphi_y /= exphi_y[origin[0], origin[1]]

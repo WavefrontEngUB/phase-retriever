@@ -6,6 +6,7 @@ FILE SELECTOR FOR POLARIMETRIC IMAGES
 set of properly corrected polarimetric images.
 """
 import os
+import numpy as np
 import sys
 
 def get_polarimetric_names(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
@@ -80,6 +81,28 @@ def get_polarimetric_names(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
         polarimetric_sets[z]["scale"] = 1e-3
     return polarimetric_sets
 
+def get_polarimetric_npz(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
+    3:"a135", 4:"aLev", 5:"aDex"}):
+    """Construct the dictionary that the program expects. This method
+    allows for a more precise plane determination and is overall more flexible."""
+    polarimetric_sets = {}
+
+    fnames = os.listdir(folder)
+    names = []
+    for name in fnames:
+        if name.endswith(".npz"):
+            names.append(name)
+
+    for name in names:
+        data = np.load(os.path.join(folder, name), allow_pickle=True)
+        z = data["z"]
+        scale = data["scale"]
+        polarimetric_sets[int(z)] = {}
+        polarimetric_sets[int(z)]["scale"] = scale
+        for i in range(6):
+            polarimetric_sets[int(z)][i] = data[pol_keys[i]]
+    return polarimetric_sets
+
 def get_polarimetric_names_kavan(folder, ftype="TIFF", pol_keys={0:"LX", 1:"L45", 
     2:"LY", 3:"L135", 4:"Q45", 5:"Q135"}):
     """Get the polarimetric image names according to Kavan's naming convention."""
@@ -136,6 +159,6 @@ def get_polarimetric_names_kavan(folder, ftype="TIFF", pol_keys={0:"LX", 1:"L45"
     return polarimetric_sets
     
 if __name__ == "__main__":
-    folder = "NA_0.5/GR"
-    pol_sets = get_polarimetric_names_kavan(folder)
+    folder = "."
+    pol_sets = get_polarimetric_npz(folder)
     print(pol_sets[0])
