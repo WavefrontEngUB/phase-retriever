@@ -24,6 +24,7 @@ Requires-Dist: numpy
 Requires-Dist: scipy
 Requires-Dist: imageio
 Requires-Dist: matplotlib
+Requires-Dist: wxPython
 
 # Phase retriever
 A python GUI for the implementation of a phase retrieval algorithm, based on 
