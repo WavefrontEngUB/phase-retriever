@@ -11,7 +11,7 @@ conda create -n phase_ret_env python pip
 conda activate phase_ret_env
 ```
 
-Install bia pip+github
+Install via pip+github
 
 ```
 pip install https://github.com/WavefrontEngUB/phase-retriever/archive/refs/heads/david_stokes.zip
