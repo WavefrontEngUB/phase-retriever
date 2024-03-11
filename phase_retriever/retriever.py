@@ -45,7 +45,7 @@ def lowpass_filter(bw, *amps):
     return filtered
 
 class SinglePhaseRetriever():
-    # TODO: Crea una classe que encapsuli completament el mètode de recuperació de fase
+    # TODO: Crea una classe que encapsuli completament el metode de recuperacio de fase
     def __init__(self, n_max=200, mode='vectorial'):
         self.options = {"pixel_size": None,  # MUST BE SCALED ACCORDING TO THE WAVELENGTH
                         "dim": 256,
@@ -56,6 +56,7 @@ class SinglePhaseRetriever():
                         "origin": None,
                         "lamb": None,
                         "path": None,
+                        "ext": "png",   # Extension of the images (it can also be npy)
                         "mode": None  # vectorial or scalar
                         }
         self.irradiance = None
@@ -67,6 +68,9 @@ class SinglePhaseRetriever():
 
         self.options["n_max"] = n_max          # Maximum number of iterations
         self.options["mode"] = mode            # vectorial or scalar
+
+    def get(self, key):
+        return self.options[key]
 
     def __getitem__(self, key):
         return self.options[key]
@@ -87,6 +91,8 @@ class SinglePhaseRetriever():
                 path = self.get("path")
         else:
             self.options["path"] = path
+            self.options["ext"] = ftype
+        
         self.polarimetric_sets = get_polarimetric_names(path, ftype=ftype)
         if not self.polarimetric_sets:
             raise ValueError(f"Cannot load polarimetric images from {path}")
@@ -192,8 +198,8 @@ class SinglePhaseRetriever():
         # Compute the Fourier Transform of the cropped irradiance to get its bandwidth
         self._compute_spectrum()
         r = get_function_radius(self.a_ft, tol=tol)/2
-        if not r:
-            raise ValueError("Could not estimate the Bandwidth of the beam")
+        # if not r:
+        #     raise ValueError("Could not estimate the Bandwidth of the beam")
         self.options["bandwidth"] = r
         return self.a_ft
 
@@ -218,7 +224,7 @@ class SinglePhaseRetriever():
             # Filtering the irradiances to remove high frequency noise fluctuations
             A_xfilt = np.real(np.sqrt(lowpass_filter(bw*2, I_x)[0])) if self.options["mode"] == "vectorial" else None
             A_yfilt = np.real(np.sqrt(lowpass_filter(bw*2, I_y)[0]))
-            A_x.append(A_xfilt) if self.options["mode"] == "vectorial" else None
+            A_x.append(A_xfilt) #if self.options["mode"] == "vectorial" else None
             A_y.append(A_yfilt)
         # Then, we need to compute the free space transfer function H
         n = self.options["dim"]
@@ -249,7 +255,8 @@ class SinglePhaseRetriever():
         # List with each of the processes, to keep track of them
         self.processes = \
                 [mp.Process(target=multi, args=(H, self.options["n_max"], phi_0, *A_x),
-                    kwargs={"queue":self.queues[0], "real":self.reals[0], "imag":self.imags[0]}) if self.options["mode"] == "vectorial" else None,
+                    kwargs={"queue":self.queues[0], "real":self.reals[0], "imag":self.imags[0]})
+                 if self.options["mode"] == "vectorial" else None,
                  mp.Process(target=multi, args=(H, self.options["n_max"], phi_0, *A_y),
                     kwargs={"queue":self.queues[1], "real":self.reals[1], "imag":self.imags[1]})]
         # Begin monitoring
@@ -300,13 +307,18 @@ class SinglePhaseRetriever():
             exphi_y *= e_delta_0
             return exphi_x, exphi_y
         else:
-            return (np.asarray(self.reals[1])+1j*np.asarray(self.imags[1])).reshape((dim, dim)), None
+            return ((np.asarray(self.reals[1])+1j*np.asarray(self.imags[1])).reshape((dim, dim)),
+                    (np.asarray(self.reals[1])+1j*np.asarray(self.imags[1])).reshape((dim, dim)))
 
-    def get_trans_fields(self):
+    def get_trans_fields(self, zeroFill=False):
         """Return the transversal components of the field."""
-        exphi_x, exphi_y = self.get_phases()  #if scalr, just the first (x) is not None
-        ex = self.A_x[0] * np.exp(1j*exphi_x)
-        ey = self.A_y[0] * np.exp(1j*exphi_y) if self.options["mode"] == "vectorial" else None
+        exphi_x, exphi_y = self.get_phases()  # if scalar, just the first (x) is not None
+        if self.options["mode"] == "vectorial":
+            ex = self.A_x[0] * np.exp(1j*exphi_x)
+            ey = self.A_y[0] * np.exp(1j*exphi_y)
+        else:
+            ex = self.A_y[0] * np.exp(1j*exphi_x)
+            ey = np.zeros_like(ex, dtype=np.complex_) if zeroFill else None
         return ex, ey
 
     def get_stokes(self):
@@ -320,7 +332,7 @@ class SinglePhaseRetriever():
             if option in self.options:
                 self.options[option] = options[option]
                 if option == "path":
-                    self.load_dataset(options[option])
+                    self.load_dataset(options[option], ftype=self.options["ext"])
                 elif option == "rect":
                     rect = options[option]
                     try:

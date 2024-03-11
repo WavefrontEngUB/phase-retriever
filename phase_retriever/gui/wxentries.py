@@ -50,6 +50,10 @@ class DirectorySelector(wx.Panel):
 
         self.SetSizer(sizer)
 
+choices = { "ext": ["png", "npy"],
+            "mode": ["vectorial", "scalar"]
+          }
+
 class wxEntryPanel(wx.Panel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -67,9 +71,11 @@ class wxEntryPanel(wx.Panel):
 
         pgrid.Append(wx.propgrid.PropertyCategory("Dataset path"))
         pgrid.Append(wx.propgrid.StringProperty("Working Directory", name="path", value=""))
+        pgrid.Append(wx.propgrid.EnumProperty("File extension", name="ext", choices=wx.propgrid.PGChoices(choices["ext"])))
         pgrid.Append(wx.propgrid.PropertyCategory("Measurement properties"))
         pgrid.Append(wx.propgrid.FloatProperty("Wavelength (um)", name="lambda", value=0.52))
         pgrid.Append(wx.propgrid.FloatProperty("Pixel size (um)", name="pixel_size", value=3.75))
+        pgrid.Append(wx.propgrid.EnumProperty("Mode", name="mode", choices=wx.propgrid.PGChoices(choices["mode"])))
         pgrid.Append(wx.propgrid.PropertyCategory("Retrieving configuration"))
         pgrid.Append(wx.propgrid.IntProperty("Number of iterations", name="n_iter", value=120))
         pgrid.Append(wx.propgrid.IntProperty("Window size", name="window_size", value=256))
@@ -90,7 +96,9 @@ class wxEntryPanel(wx.Panel):
                 "window_center": pgrid.GetPropertyByName("window_center"),
                 "phase_origin": pgrid.GetPropertyByName("phase_origin"),
                 "bandwidth": pgrid.GetPropertyByName("bandwidth"),
-                "path": pgrid.GetPropertyByName("path")
+                "path": pgrid.GetPropertyByName("path"),
+                "ext": pgrid.GetPropertyByName("ext"),
+                "mode": pgrid.GetPropertyByName("mode")
                 }
 
     def GetButton(self, name):
@@ -122,3 +130,12 @@ class wxEntryPanel(wx.Panel):
                 raise NameError(f"Property {name} does not exist")
             ptr = self.iter[name]
             self.pgrid.SetPropertyValue(ptr, props[name])
+
+    def GetValue(self, name):
+        if name not in self.iter:
+            raise NameError(f"Property {name} does not exist")
+        ptr = self.iter[name]
+        value = self.pgrid.GetPropertyValue(ptr)
+        if name in choices.keys():
+            value = choices[name][value]
+        return value

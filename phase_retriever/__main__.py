@@ -1,4 +1,5 @@
-from phase_retriever import PhaseRetrieverGUI, wxGUI
+from .interface import PhaseRetrieverGUI
+from .wx_gui import wxGUI
 import platform
 import wx
 import tkinter as tk

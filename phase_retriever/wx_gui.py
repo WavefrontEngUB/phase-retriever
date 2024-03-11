@@ -22,6 +22,8 @@ class GUIRetriever(PhaseRetriever):
     def monitor_process(self, *args):
         self.finished = False
         for p in self.processes:
+            if p is None:
+                continue
             p.start()
             #p.join(timeout=0)
         wx.CallLater(delta_t, self.check_status, *args)
@@ -35,7 +37,7 @@ class GUIRetriever(PhaseRetriever):
                     self.mse[i].append(data)
                 except:
                     full = False
-            status = any([p.is_alive() for p in self.processes])
+            status = any([p.is_alive() for p in self.processes if p is not None])
         self.update_function(plot)
         # Check the processes again if they are still alive
         if status:
@@ -43,6 +45,8 @@ class GUIRetriever(PhaseRetriever):
             wx.CallLater(delta_t, self.check_status, plot)
         else:
             for p in self.processes:
+                if p is None:
+                    continue
                 p.join(timeout=0)
             self.finished = True
 
@@ -85,6 +89,7 @@ class wxGUI(wx.Frame):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         self.entries = entries = wxEntryPanel(notebook)
+        # self.entries.GetButton("ftype").Bind(wx.EVT_CHECKBOX, self.OnLoadClick2)
         self.entries.GetButton("search").Bind(wx.EVT_BUTTON, self.OnLoadClick)
         self.entries.GetButton("autoadjust").Bind(wx.EVT_BUTTON, self.OnAutoadjust)
         self.entries.GetButton("begin").Bind(wx.EVT_BUTTON, self.OnRetrieve)
@@ -194,6 +199,9 @@ class wxGUI(wx.Frame):
                             style=wx.ICON_ERROR | wx.OK)
             error_dialog.ShowModal()
 
+    def OnLoadClick2(self, event):
+        pass
+
     def OnLoadClick(self, event):
         dialog = wx.DirDialog(self, "Choose input directory", "", wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
@@ -215,10 +223,10 @@ class wxGUI(wx.Frame):
 
         # Finally, we load all images into the phase retriever
         try:
-            self.retriever.load_dataset(dirname)
+            self.retriever.load_dataset(dirname, ftype=self.entries.GetValue("ext"))
         except:
             error_dialog = wx.MessageDialog(self, 
-                            "Selected directory does not contain polarimetric images.",
+                            f"Selected directory does not contain polarimetric images.  {self.entries.GetValue('ext')}",
                             style=wx.ICON_ERROR | wx.OK)
             error_dialog.ShowModal()
 
@@ -279,6 +287,8 @@ class wxGUI(wx.Frame):
             ax.clear()
             ax.plot([], [])
         # Then, we call the retriever to commence the process
+        self.retriever.config(mode=self.entries.GetValue("mode"))
+        self.retriever.config(pixel_size=self.entries.GetValue("pixel_size"))
         self.retriever.retrieve(args=(plot,), monitor=False)
         wx.CallLater(delta_t, self.retriever.monitor_process, plot)
         wx.CallLater(delta_t, self.OnCheckCompletion)
@@ -291,10 +301,7 @@ class wxGUI(wx.Frame):
 
     def OnFinished(self):
         """Plot results once the phase retriever is finished"""
-        A_x, A_y = self.retriever.A_x[0], self.retriever.A_y[0]
-        ephi_x, ephi_y = self.retriever.get_phases()
-        Ex = A_x*ephi_x
-        Ey = A_y*ephi_y
+        Ex, Ey = self.retriever.get_trans_fields(zeroFill=True)
         self.update_results(Ex, Ey)
 
         self.plotter.set_colorbar("Results")
