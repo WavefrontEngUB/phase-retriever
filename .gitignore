@@ -11,7 +11,6 @@ Cir_s5/
 *.png
 !Sim_*.png
 *.xcf
-*.txt
 *.npy
 *.npz
 !amplitudes.npz
