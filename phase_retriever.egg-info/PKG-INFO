@@ -20,6 +20,10 @@ Classifier: Programming Language :: Python :: 3.10
 Classifier: Topic :: Scientific/Engineering
 License-File: LICENSE
 Requires-Dist: regex
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: imageio
+Requires-Dist: matplotlib
 
 # Phase retriever
 A python GUI for the implementation of a phase retrieval algorithm, based on 

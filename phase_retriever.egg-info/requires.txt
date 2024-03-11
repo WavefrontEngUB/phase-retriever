@@ -1,1 +1,5 @@
 regex
+numpy
+scipy
+imageio
+matplotlib
