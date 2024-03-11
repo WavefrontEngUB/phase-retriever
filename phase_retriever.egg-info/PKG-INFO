@@ -1,0 +1,26 @@
+Metadata-Version: 2.1
+Name: phase_retriever
+Version: 0.1.0
+Summary: Program to retrieve the phase of an optic field based on Fineup's algorithm.
+Home-page: https://github.com/kramos966/phase-retriever
+Author: Marcos Aviñoá-Pérez
+Author-email: dmaluenda@ub.edu
+License: GNU Public License v3
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Topic :: Scientific/Engineering
+License-File: LICENSE
+Requires-Dist: regex
+
+# Phase retriever
+A python GUI for the implementation of a phase retrieval algorithm, based on 
+Fineup's backpropagation algorithm. 
