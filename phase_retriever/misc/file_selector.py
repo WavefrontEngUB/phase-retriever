@@ -9,6 +9,8 @@ import os
 import sys
 import regex as re
 
+WAVELENGTH_um = 0.514  # FIXME: wavelength in microns is hardcoded !!!!
+
 def get_polarimetric_names(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
     3:"a135", 4:"aLev", 5:"aDex"}, ftype="png"):
     """Return a set of dictionaries containing the set of polarimetric images
@@ -20,7 +22,7 @@ def get_polarimetric_names(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
         and the order of {z_location} and {polarimetric image} is not relevant.
 
         {z_location} must be of the form z{value}{units}, where {units} can be
-        um, mm, nm, lam (microns), or nothing (in which case it is assumed to be microns).
+        um, mm, nm, lam (microns), or empty (by default it is microns).
 
     (David's naming convention)
     """
@@ -64,7 +66,7 @@ def get_polarimetric_names(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
 
         # Check if the dict for the distance already exists
         z, z_units = get_z_suffix(fields[z_idx])
-        z_int = int(z)
+        z_int = int(z)  # TODO: consider to replace int with str
         if z_int not in polarimetric_sets:  # if not, create it
             polarimetric_sets[z_int] = {}
 
@@ -101,7 +103,7 @@ def get_z_suffix(z_field):
     scale = (1e3 if units == "mm" else
              1 if units == "um" else
              1e-3 if units == "nm" else
-             1/.514 if units == "lam" else   # FIXME: wavelength in microns is hardcoded !!!!
+             1/WAVELENGTH_um if units == "lam" else   # FIXME: wavelength in microns is hardcoded !!!!
              1)  # Default to um
     return float(value), scale
 
