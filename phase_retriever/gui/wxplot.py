@@ -76,16 +76,19 @@ class PlotsNotebook(wx.Panel):
         self.pages = {}
         self.colorbar = None
         
-    def add(self, name):
+    def add(self, name, select=False):
         if name in self.pages:
             raise NameError(f"Page with name {name} already exists!")
         page = Plot(self.nb)
-        self.nb.AddPage(page, name)
+        self.nb.AddPage(page, name, select=select)
         self.pages[name] = len(self.pages)
         return page
 
     def get_page(self, name):
         return self.nb.GetPage(self.pages[name])
+
+    def select_page(self, name):
+        self.nb.SetSelection(self.pages[name])
 
     def set_imshow(self, name, image, cmap="viridis", shape=(1, 1), num=1, vmin=0, vmax=1):
         if name not in self.pages:
@@ -124,7 +127,8 @@ class PlotsNotebook(wx.Panel):
         plot = self.nb.GetPage(idx)
         plot.draw_circle(position, r, color=color)
 
-    def set_colorbar(self, name, share=(0, 2)):
+    def set_colorbar(self, name, share=(3, 5, 1)):
+
         idx = self.pages[name]
         plot = self.nb.GetPage(idx)
         figure = plot.figure

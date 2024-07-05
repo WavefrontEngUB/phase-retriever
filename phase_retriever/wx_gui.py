@@ -1,3 +1,5 @@
+import os.path
+
 import wx
 from wx.lib.agw.floatspin import EVT_FLOATSPIN
 from wx.propgrid import EVT_PG_CHANGED
@@ -203,8 +205,8 @@ class wxGUI(wx.Frame):
         pass
 
     def OnLoadClick(self, event):
-        dialog = wx.DirDialog(self, "Choose input directory", "", wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
-
+        dialog = wx.DirDialog(self, "Choose input directory  (files might not be shown)",
+                              "", wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         # Run the window and check if it successfully finishes
         res = dialog.ShowModal()
         if res == wx.ID_OK:
@@ -279,8 +281,8 @@ class wxGUI(wx.Frame):
             ax1 = fig.add_subplot(1, 2, 1)
             ax2 = fig.add_subplot(1, 2, 2)
             axes = [ax1, ax2]
-            axes[0].set_title("MSE X component")
-            axes[1].set_title("MSE Y component")
+            axes[0].set_title("MSE X component (loading...)")
+            axes[1].set_title("MSE Y component (loading...)")
 
         # First, we need to clear all possible lines
         for ax in axes:
@@ -292,6 +294,8 @@ class wxGUI(wx.Frame):
         self.retriever.retrieve(args=(plot,), monitor=False)
         wx.CallLater(delta_t, self.retriever.monitor_process, plot)
         wx.CallLater(delta_t, self.OnCheckCompletion)
+        self.plotter.select_page("MSE")
+
 
     def OnCheckCompletion(self, event=None):
         if self.retriever.finished:
@@ -301,27 +305,33 @@ class wxGUI(wx.Frame):
 
     def OnFinished(self):
         """Plot results once the phase retriever is finished"""
-        Ex, Ey = self.retriever.get_trans_fields(zeroFill=True)
-        self.update_results(Ex, Ey)
+        self.retriever.set_fields(zeroFill=True)
+        Ex, Ey, Ez = self.retriever.get_fields()
+        self.update_results(Ex, Ey, Ez)
 
         self.plotter.set_colorbar("Results")
+        self.plotter.select_page("Results")
 
         # TODO: Prepare the propagator to explore the phase retrieval results...
         configs = self.entries.GetValues()
         pixel_size = configs["pixel_size"]/configs["lamb"]
         self.propagator["Ex"] = Ex
         self.propagator["Ey"] = Ey
+        self.propagator["Ez"] = Ez
         self.propagator["pixel_size"] = pixel_size
         self.propagator.create_gamma()
         self.propagator.create_spectra()
     
-    def update_results(self, Ex, Ey):
-        self.plotter.set_imshow("Results", np.angle(Ex), shape=(2, 2), num=1, cmap="twilight_shifted",
+    def update_results(self, Ex, Ey, Ez):
+        self.plotter.set_imshow("Results", abs(Ex), shape=(3, 2), num=1, cmap="gray")
+        self.plotter.set_imshow("Results", np.angle(Ex), shape=(3, 2), num=2, cmap="twilight_shifted",
                 vmin=-np.pi, vmax=np.pi)
-        self.plotter.set_imshow("Results", abs(Ex), shape=(2, 2), num=2, cmap="gray")
-        self.plotter.set_imshow("Results", np.angle(Ey), shape=(2, 2), num=3, cmap="twilight_shifted",
+        self.plotter.set_imshow("Results", abs(Ey), shape=(3, 2), num=3, cmap="gray")
+        self.plotter.set_imshow("Results", np.angle(Ey), shape=(3, 2), num=4, cmap="twilight_shifted",
                 vmin=-np.pi, vmax=np.pi)
-        self.plotter.set_imshow("Results", abs(Ey), shape=(2, 2), num=4, cmap="gray")
+        self.plotter.set_imshow("Results", abs(Ez), shape=(3, 2), num=5, cmap="gray")
+        self.plotter.set_imshow("Results", np.angle(Ez), shape=(3, 2), num=6, cmap="twilight_shifted",
+                vmin=-np.pi, vmax=np.pi)
 
     def OnExplore(self, event):
         if not self.retriever.finished:
@@ -331,8 +341,8 @@ class wxGUI(wx.Frame):
             return
         # Get the selected z propagation value (wavelength units)
         z = self.explorer.GetZ()
-        Ex, Ey = self.propagator.propagate_field_to(z)
-        self.update_results(Ex, Ey)
+        Ex, Ey, Ez = self.propagator.propagate_field_to(z)
+        self.update_results(Ex, Ey, Ez)
 
     def OnExport(self, event):
         try:

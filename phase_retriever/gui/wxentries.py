@@ -83,7 +83,7 @@ class wxEntryPanel(wx.Panel):
         pgrid.Append(wx.propgrid.ArrayStringProperty("Phase origin", name="phase_origin", value=["0", "0"]))
         pgrid.Append(wx.propgrid.FloatProperty("Bandwidth (pixels)", name="bandwidth", value=20))
 
-        sizer.Add(pgrid, 1, wx.EXPAND | wx.LEFT)
+        sizer.Add(pgrid, 2, wx.EXPAND | wx.LEFT)
         sizer.Add(polEntry, 1, wx.EXPAND | wx.LEFT)
         self.SetSizer(sizer)
 
@@ -125,6 +125,7 @@ class wxEntryPanel(wx.Panel):
         return self.pgrid
 
     def SetValue(self, **props):
+        print(self.pgrid.GetSplitterPosition())
         for name in props:
             if name not in self.iter:
                 raise NameError(f"Property {name} does not exist")
