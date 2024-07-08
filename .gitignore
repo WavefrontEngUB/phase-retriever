@@ -20,3 +20,5 @@ Cir_s5/
 *.swp
 .idea
 *.npz
+phase_retriever.egg-info/
+*.egg
