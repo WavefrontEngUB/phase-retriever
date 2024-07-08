@@ -11,6 +11,7 @@ setup(
     license='GNU Public License v3',
     packages=find_packages(),
     install_requires=[open('requirements.txt').read().splitlines()],
+    include_package_data=True,
 
     classifiers=[
         'Development Status :: 3 - Alpha',

@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
 
     module_dir = os.path.dirname(__file__)
-    test_data = os.path.join(os.path.dirname(module_dir), 'test_dataset')
+    test_data = os.path.join(module_dir, 'test_dataset')
     print(" -------> ", test_data)
     data_dir = test_data if DEMO_FLAG else ""
 
