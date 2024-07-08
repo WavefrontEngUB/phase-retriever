@@ -45,25 +45,32 @@ def lowpass_filter(bw, *amps):
     return filtered
 
 class SinglePhaseRetriever():
-    # TODO: Crea una classe que encapsuli completament el mètode de recuperació de fase
-    def __init__(self, n_max=200):
-        self.options = {
-            "pixel_size":None,  # MUST BE SCALED ACCORDING TO THE WAVELENGTH
-            "dim"       :256,
-            "rect"      :None,
-            "n_max"     :n_max,
-            "eps"       :0.01,
-            "bandwidth" :None,
-            "origin"    :None,
-            "lamb"      :None,
-            "path"      :None
-            }
+    # TODO: Crea una classe que encapsuli completament el metode de recuperacio de fase
+    def __init__(self, n_max=200, mode='vectorial'):
+        self.options = {"pixel_size": None,  # MUST BE SCALED ACCORDING TO THE WAVELENGTH
+                        "dim": 256,
+                        "rect": None,
+                        "n_max": n_max,
+                        "eps": 0.01,
+                        "bandwidth": None,
+                        "origin": None,
+                        "lamb": None,
+                        "path": None,
+                        "ext": "png",  # Extension of the images (it can also be npy)
+                        "mode": None   # vectorial or scalar
+                        }
         self.irradiance = None
         self.images = {}
         self.cropped = {}
         self.cropped_irradiance = None
         self.a_ft = None
         self.mse = [[], []]
+
+        self.options["n_max"] = n_max          # Maximum number of iterations
+        self.options["mode"] = mode            # vectorial or scalar
+
+    def get(self, key):
+        return self.options[key]
 
     def __getitem__(self, key):
         return self.options[key]
@@ -72,23 +79,21 @@ class SinglePhaseRetriever():
         # TODO: Check types correctly
         self.config(**{key:value})
 
-    def load_dataset(self, path=None, kind="png"):
+    def load_dataset(self, path=None, ftype="png"):
         self.irradiance = None
         self.images = {}
         # If the user does not input a path
         if not path:
             # If there is no path already inputted
-            if not self["path"]:
+            if not self.get("path"):
                 raise ValueError("Dataset path must be specified")
             else:
-                path = self["path"]
+                path = self.get("path")
         else:
             self.options["path"] = path
-        
-        if kind == "png":
-            self.polarimetric_sets = get_polarimetric_names(path)
-        elif kind == "npz":
-            self.polarimetric_sets = get_polarimetric_npz(path)
+            self.options["ext"] = ftype
+
+        self.polarimetric_sets, beam_name = get_polarimetric_names(path, ftype=ftype)
         if not self.polarimetric_sets:
             raise ValueError(f"Cannot load polarimetric images from {path}")
 
@@ -99,11 +104,15 @@ class SinglePhaseRetriever():
                 if type(polarization) != int:
                     continue
                 path = self.polarimetric_sets[z][polarization]
-                image = imageio.imread(path)
+                if ftype == "npy":
+                    image = np.load(path)
+                else:
+                    image = imageio.imread(path)
                 self.images[z][polarization] = image.astype(np.float64)
 
         # Compute irradiance
         self._compute_irradiance()
+        return beam_name
 
     def _compute_irradiance(self):
         # Compute only the irradiance in the initial plane
@@ -144,17 +153,23 @@ class SinglePhaseRetriever():
             first = False
         # And that's THA'
 
+    def get_images(self, z_idx=None, crop=True):
+        imgs = self.images if not crop else self.cropped
+        zetes = list(imgs.keys())
+        z_idx = z_idx if z_idx is not None else 0
+        return list(imgs[zetes[z_idx]].values())
+
     def center_window(self):
         """Center the window of size dim X dim on the region with the most energy content."""
         # We do it based on the total irradiance.
         if not self.images:
-            self.load_dataset()
+            _ = self.load_dataset()
         try:
             _ = self.irradiance.shape
         except:
             # Irradiance not yet computed
             self._compute_irradiance()
-        top, bottom = find_rect_region(self.irradiance, self["dim"])
+        top, bottom = find_rect_region(self.irradiance, self.get("dim"))
 
         # Now, we crop all images to the region specified by the top, bottom pair of coords.
         self["rect"] = top, bottom
@@ -174,18 +189,18 @@ class SinglePhaseRetriever():
 
     def _compute_spectrum(self):
         if not self.cropped:
-            self._crop_images(*self["rect"])
+            self._crop_images(*self.get("rect"))
         ft = fftshift(fft2(ifftshift(self.cropped_irradiance)))
         self.a_ft = a_ft = np.real(np.conj(ft)*ft)
 
     def compute_bandwidth(self, tol=1e-4):
         if not self.cropped:
-            self._crop_images(*self["rect"])
+            self._crop_images(*self.get("rect"))
         # Compute the Fourier Transform of the cropped irradiance to get its bandwidth
         self._compute_spectrum()
         r = get_function_radius(self.a_ft, tol=tol)/2
-        if not r:
-            raise ValueError("Could not estimate the Bandwidth of the beam")
+        # if not r:
+        #     raise ValueError("Could not estimate the Bandwidth of the beam")
         self.options["bandwidth"] = r
         return self.a_ft
 
@@ -205,12 +220,12 @@ class SinglePhaseRetriever():
         self.A_x = A_x = []
         self.A_y = A_y = []
         for z in self.cropped:
-            I_x = self.cropped[z][2]
+            I_x = self.cropped[z][2] if self.options["mode"] == "vectorial" else None
             I_y = self.cropped[z][0]
             # Filtering the irradiances to remove high frequency noise fluctuations
-            A_xfilt = np.real(np.sqrt(lowpass_filter(bw*2, I_x)[0]))
+            A_xfilt = np.real(np.sqrt(lowpass_filter(bw*2, I_x)[0])) if self.options["mode"] == "vectorial" else None
             A_yfilt = np.real(np.sqrt(lowpass_filter(bw*2, I_y)[0]))
-            A_x.append(A_xfilt)
+            A_x.append(A_xfilt) #if self.options["mode"] == "vectorial" else None
             A_y.append(A_yfilt)
         # Then, we need to compute the free space transfer function H
         n = self.options["dim"]
@@ -243,9 +258,12 @@ class SinglePhaseRetriever():
         eps = self["eps"]
         self.processes = \
                 [mp.Process(target=multi, args=(H, self.options["n_max"], phi_0, *A_x),
-                    kwargs={"queue":self.queues[0], "real":self.reals[0], "imag":self.imags[0], "eps":eps}),
+                    kwargs={"queue":self.queues[0], "eps":eps,
+                            "real":self.reals[0], "imag":self.imags[0]})
+                 if self.options["mode"] == "vectorial" else None,
                  mp.Process(target=multi, args=(H, self.options["n_max"], phi_0, *A_y),
-                     kwargs={"queue":self.queues[1], "real":self.reals[1], "imag":self.imags[1], "eps":eps})]
+                    kwargs={"queue":self.queues[1], "eps":eps,
+                            "real":self.reals[1], "imag":self.imags[1]})]
         # Begin monitoring
         if monitor:
             self.monitor_process(*args)
@@ -257,9 +275,11 @@ class SinglePhaseRetriever():
     def monitor_process(self, *args):
         # TODO: Aconsegueix-ne les fases ajustades
         for p in self.processes:
+            if p is None:
+                continue
             p.start()
             p.join(timeout=0)
-        alive = any([p.is_alive() for p in self.processes])
+        alive = any([p.is_alive() for p in self.processes if p is not None])
         while alive:
             for i, p in enumerate(self.processes):
                 full = True
@@ -269,27 +289,42 @@ class SinglePhaseRetriever():
                         self.mse[i].append(data)
                     except:
                         full = False
-            alive = any([p.is_alive() for p in self.processes])
+            alive = any([p.is_alive() for p in self.processes if p is not None])
             # Update through an update function if necessary
             self.update_function(*args)
     
     def get_phases(self):
         """Convert the multiprocessing arrays into the 2D phase distributions."""
         dim = self.options["dim"]
-        exphi_x = (np.asarray(self.reals[0])+1j*np.asarray(self.imags[0])).reshape((dim, dim))
-        exphi_y = (np.asarray(self.reals[1])+1j*np.asarray(self.imags[1])).reshape((dim, dim))
-        # Now, impose the phase difference as obtained experimentally through the Stokes parameters
-        stokes = self.get_stokes()
-        delta = np.arctan2(stokes[3], stokes[2])
-        # The phase origin will correspond to the value of the phase where the maximum of irradiance lies
-        origin = self.options["origin"]
-        delta_0 = delta[origin[0], origin[1]]
-        e_delta_0 = np.exp(-1j*delta_0) # -1j Seems to be THE RIGHT WAY(TM) to do it
+        if self.options['mode'] == 'vectorial':
+            exphi_x = (np.asarray(self.reals[0])+1j*np.asarray(self.imags[0])).reshape((dim, dim))
+            exphi_y = (np.asarray(self.reals[1])+1j*np.asarray(self.imags[1])).reshape((dim, dim))
+            # Now, impose the phase difference as obtained experimentally through the Stokes parameters
+            stokes = self.get_stokes()
+            delta = np.arctan2(stokes[3], stokes[2])
+            # The phase origin will correspond to the value of the phase where the maximum of irradiance lies
+            origin = self.options["origin"]
+            delta_0 = delta[origin[0], origin[1]]
+            e_delta_0 = np.exp(-1j*delta_0) # -1j Seems to be THE RIGHT WAY(TM) to do it
 
-        exphi_x /= exphi_x[origin[0], origin[1]]
-        exphi_y /= exphi_y[origin[0], origin[1]]
-        exphi_y *= e_delta_0
-        return exphi_x, exphi_y
+            exphi_x /= exphi_x[origin[0], origin[1]]
+            exphi_y /= exphi_y[origin[0], origin[1]]
+            exphi_y *= e_delta_0
+            return exphi_x, exphi_y
+        else:
+            return ((np.asarray(self.reals[1])+1j*np.asarray(self.imags[1])).reshape((dim, dim)),
+                    (np.asarray(self.reals[1])+1j*np.asarray(self.imags[1])).reshape((dim, dim)))
+
+    def get_trans_fields(self, zeroFill=False):
+        """Return the transversal components of the field."""
+        exphi_x, exphi_y = self.get_phases()  # if scalar, just the first (x) is not None
+        if self.options["mode"] == "vectorial":
+            ex = self.A_x[0] * exphi_x
+            ey = self.A_y[0] * exphi_y
+        else:
+            ex = self.A_y[0] * np.exp(1j*exphi_x)
+            ey = np.zeros_like(ex, dtype=np.complex_) if zeroFill else None
+        return ex, ey
 
     def get_stokes(self):
         irradiances = [self.cropped[0][pol] for pol in range(6)]
@@ -302,14 +337,14 @@ class SinglePhaseRetriever():
             if option in self.options:
                 self.options[option] = options[option]
                 if option == "path":
-                    self.load_dataset(options[option])
+                    _ = self.load_dataset(options[option], ftype=self.options["ext"])
                 elif option == "rect":
                     rect = options[option]
                     try:
                         shape = self.irradiance.shape
                     except:
                         raise ValueError("Dataset must be loaded before defining a window!")
-                    top, bottom = bound_rect_to_im(shape, rect)
+                    top, bottom = rect # if rect is passed, nothing else is needed
                     self.options[option] = [top, bottom]
                     # Finally, recompute the cropped images!
                     self._crop_images(top, bottom)

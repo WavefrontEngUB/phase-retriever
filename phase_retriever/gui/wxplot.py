@@ -74,20 +74,23 @@ class PlotsNotebook(wx.Panel):
         self.SetSizer(sizer)
 
         self.pages = {}
-        self.colorbar = None
         
-    def add(self, name):
+    def add(self, name, select=False):
         if name in self.pages:
             raise NameError(f"Page with name {name} already exists!")
         page = Plot(self.nb)
-        self.nb.AddPage(page, name)
+        self.nb.AddPage(page, name, select=select)
         self.pages[name] = len(self.pages)
         return page
 
     def get_page(self, name):
         return self.nb.GetPage(self.pages[name])
 
-    def set_imshow(self, name, image, cmap="viridis", shape=(1, 1), num=1, vmin=0, vmax=1):
+    def select_page(self, name):
+        self.nb.SetSelection(self.pages[name])
+
+    def set_imshow(self, name, image, title='', cmap="viridis",
+                   shape=(1, 1), num=1, vmin=None, vmax=None):
         if name not in self.pages:
             fig = self.add(name).figure
             ax = fig.add_subplot(*shape, num)
@@ -103,10 +106,20 @@ class PlotsNotebook(wx.Panel):
 
         ny, nx = image.shape
 
+        vmin = vmin or image.min()
+        vmax = vmax or image.max()
+
         ax_img = ax.get_images()[0]
         ax_img.set_extent([0, nx, ny, 0])
         ax_img.set_data(image)
-        ax_img.set_clim(image.min(), image.max())
+        ax_img.set_clim(vmin, vmax)  # image.min(), image.max())
+        ax.set_xticks([0, int(nx/4), int(nx/2), int(nx*3/4), nx])
+        ax.set_yticks([0,  int(ny/4), int(ny/2), int(ny*3/4), ny])
+        if title:
+            text_color = 'white' if (name=="Results" and num%2==1) else 'black'
+            ax.annotate(title, (0.95, 0.07), xycoords='axes fraction',
+                        fontsize=16, horizontalalignment='right', color=text_color)
+        # ax.grid()
         canvas.flush_events()
         canvas.draw()
 
@@ -124,7 +137,8 @@ class PlotsNotebook(wx.Panel):
         plot = self.nb.GetPage(idx)
         plot.draw_circle(position, r, color=color)
 
-    def set_colorbar(self, name, share=(0, 2)):
+    def set_colorbar(self, name, share=(3, 5, 1)):
+
         idx = self.pages[name]
         plot = self.nb.GetPage(idx)
         figure = plot.figure
@@ -136,8 +150,14 @@ class PlotsNotebook(wx.Panel):
         for i in share:
             ax_shared.append(axes[i])
 
-        if not self.colorbar:
-            self.colorbar = figure.colorbar(im, ax=ax_shared)
+        cbar = figure.colorbar(im, ax=ax_shared)
+
+        ticks = [-np.pi, -np.pi/2, 0, np.pi/2, np.pi] if name=="Results" else [-1, 0, 1]
+        labels = ([r"$-\pi$", r"$-\frac{\pi}{2}$", "0", r"$\frac{\pi}{2}$", r"$\pi$"]
+                  if name=="Results" else ["-1", "0", "1"])
+
+        cbar.set_ticks(ticks)
+        cbar.set_ticklabels(labels)
 
         plot.canvas.draw()
 
