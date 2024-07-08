@@ -47,6 +47,9 @@ def get_polarimetric_names(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
         except:
             continue
 
+        if fields[-1] == "retrieved":
+            continue  # It probably will be an already retrieved file
+
         if len(fields) < 3:
             continue  # Not a valid filename!
 
