@@ -50,6 +50,8 @@ def get_polarimetric_names(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
         if len(fields) < 3:
             continue  # Not a valid filename!
 
+        beam_name = fields[0]
+
         # Get the index for the analyzer field
         if pol_idx is None:  # just the first time
             for idx, field in enumerate(fields):
@@ -91,7 +93,7 @@ def get_polarimetric_names(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
         elif fields[pol_idx] == pol_keys[5]:
             polarimetric_sets[z_int][5] = complete_fname
         polarimetric_sets[z_int]["scale"] = z_units
-    return polarimetric_sets
+    return polarimetric_sets, beam_name
 
 def get_polarimetric_npz(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
     3:"a135", 4:"aLev", 5:"aDex"}):
@@ -100,12 +102,15 @@ def get_polarimetric_npz(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
     polarimetric_sets = {}
 
     fnames = os.listdir(folder)
-    names = []
-    for name in fnames:
-        if name.endswith(".npz"):
-            names.append(name)
+    # names = []
+    # for name in fnames:
+    #     if name.endswith(".npz"):
+    #         names.append(name)
 
-    for name in names:
+    beam_name = None
+
+    for name in [n for n in fnames if n.endswith(".npz")]:
+        beam_name = name.split("_")[0]
         data = np.load(os.path.join(folder, name), allow_pickle=True)
         z = data["z"]
         scale = data["scale"]
@@ -113,7 +118,7 @@ def get_polarimetric_npz(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
         polarimetric_sets[int(z)]["scale"] = scale
         for i in range(6):
             polarimetric_sets[int(z)][i] = data[pol_keys[i]]
-    return polarimetric_sets
+    return polarimetric_sets, beam_name
 
 def get_z_suffix(z_field):
     """Return the z value and its units."""
@@ -160,6 +165,8 @@ def get_polarimetric_names_kavan(folder, ftype="TIFF", pol_keys={0:"LX", 1:"L45"
         if len(fields) < 4:
             continue # Not a valid filename!
 
+        beam_name = fields[0]
+
         # Check if the dict for the distance already exists
         z = int(fields[-1])
         complete_fname = f"{folder}/{fname}"
@@ -184,9 +191,10 @@ def get_polarimetric_names_kavan(folder, ftype="TIFF", pol_keys={0:"LX", 1:"L45"
             
         elif fields[1] == pol_keys[5]:
             polarimetric_sets[z][5] = complete_fname
-    return polarimetric_sets
+    return polarimetric_sets, beam_name
     
 if __name__ == "__main__":
     folder = "."
-    pol_sets = get_polarimetric_npz(folder)
+    pol_sets, beam_name = get_polarimetric_npz(folder)
+    print(beam_name)
     print(pol_sets[0])

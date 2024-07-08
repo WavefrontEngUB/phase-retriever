@@ -9,7 +9,7 @@ class Recenterer:
         self.ref = reference
         self.path = path
 
-        self.polarimetric_sets = get_polarimetric_names(path)
+        self.polarimetric_sets, beam_name = get_polarimetric_names(path)
         self.keys = self.polarimetric_sets
 
     def select_reference(self, ref_number, bandwidth=.22):

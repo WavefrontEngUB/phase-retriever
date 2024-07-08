@@ -71,20 +71,20 @@ class wxEntryPanel(wx.Panel):
 
         pgrid.Append(wx.propgrid.PropertyCategory("Dataset path"))
         pgrid.Append(wx.propgrid.StringProperty("Working Directory", name="path", value=""))
-        pgrid.Append(wx.propgrid.EnumProperty("File extension", name="ext", choices=wx.propgrid.PGChoices(choices["ext"])))
+        pgrid.Append(wx.propgrid.EnumProperty("Input files extension", name="ext", choices=wx.propgrid.PGChoices(choices["ext"])))
         pgrid.Append(wx.propgrid.PropertyCategory("Measurement properties"))
         pgrid.Append(wx.propgrid.FloatProperty("Wavelength (um)", name="lambda", value=0.52))
         pgrid.Append(wx.propgrid.FloatProperty("Pixel size (um)", name="pixel_size", value=3.75))
         pgrid.Append(wx.propgrid.EnumProperty("Mode", name="mode", choices=wx.propgrid.PGChoices(choices["mode"])))
         pgrid.Append(wx.propgrid.PropertyCategory("Retrieving configuration"))
         pgrid.Append(wx.propgrid.IntProperty("Number of iterations", name="n_iter", value=120))
-        pgrid.Append(wx.propgrid.IntProperty("Window size", name="window_size", value=256))
+        pgrid.Append(wx.propgrid.IntProperty("Window size", name="window_size", value=128))
         pgrid.Append(wx.propgrid.ArrayStringProperty("Window center", name="window_center", value=["0", "0"]))
         pgrid.Append(wx.propgrid.ArrayStringProperty("Phase origin", name="phase_origin", value=["0", "0"]))
         pgrid.Append(wx.propgrid.FloatProperty("Bandwidth (pixels)", name="bandwidth", value=20))
 
-        sizer.Add(pgrid, 2, wx.EXPAND | wx.LEFT)
-        sizer.Add(polEntry, 1, wx.EXPAND | wx.LEFT)
+        sizer.Add(pgrid, 2, wx.EXPAND | wx.RIGHT)
+        sizer.Add(polEntry, 1, wx.EXPAND | wx.RIGHT)
         self.SetSizer(sizer)
 
         # Dictionary with pairs of key-pointer to each property in the grid
@@ -125,7 +125,6 @@ class wxEntryPanel(wx.Panel):
         return self.pgrid
 
     def SetValue(self, **props):
-        print(self.pgrid.GetSplitterPosition())
         for name in props:
             if name not in self.iter:
                 raise NameError(f"Property {name} does not exist")

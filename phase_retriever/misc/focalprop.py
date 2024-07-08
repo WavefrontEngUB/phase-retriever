@@ -2,8 +2,8 @@ import numpy as np
 from scipy.fft import fftshift, ifftshift, fft2, ifft2, set_workers
 import multiprocessing as mp
 
-fft = lambda field: fftshift(fft2(ifftshift(field)))
-ifft = lambda spectr: ifftshift(ifft2(fftshift(spectr)))
+sfft2 = lambda field: fftshift(fft2(ifftshift(field)))
+sifft2 = lambda spectr: ifftshift(ifft2(fftshift(spectr)))
 
 workers = mp.cpu_count()
 
@@ -40,16 +40,17 @@ class FocalPropagator():
                 mask = np.real(phase) < 0
                 phase[mask] = -phase[mask]
             H = np.exp(phase)
-            with set_workers(4):
-                Ex = ifft2(H*self.Ax)
-                Ey = ifft2(H*self.Ay)
-                Ez = ifft2(H*self.Az)
+            with set_workers(6):
+                Ex = sifft2(H*self.Ax)
+                Ey = sifft2(H*self.Ay)
+                Ez = sifft2(H*self.Az)
             I = np.real(np.conj(Ex)*Ex)+\
                 np.real(np.conj(Ey)*Ey)
             I[:] /= self.Imax
             return I
 
     def propagate_field_to(self, z):
+
         if (isinstance(self["Ex"], np.ndarray) and isinstance(self["Ey"], np.ndarray)
                 and isinstance(self["Ez"], np.ndarray)):
             phase = 2j*np.pi*z*self.wz
@@ -57,18 +58,20 @@ class FocalPropagator():
                 mask = np.real(phase) < 0
                 phase[mask] = -phase[mask]
             H = np.exp(phase)
-            with set_workers(4):
-                Ex = ifft2(H*self.Ax)
-                Ey = ifft2(H*self.Ay)
-                Ez = ifft2(H*self.Az)
+
+            with set_workers(6):
+                Ex = sifft2(H*self.Ax)
+                Ey = sifft2(H*self.Ay)
+                Ez = sifft2(H*self.Az)
             return Ex, Ey, Ez
+        else:
+            raise Exception("Field not ready to be propagated")
 
     def set_fields(self, Ex, Ey, wz=None):
         self.Ex, self.Ey = Ex, Ey
         with set_workers(4):
-            self.Ax = fft2(Ex)
-            self.Ay = fft2(Ey)
-            # self.Ez = ifft2(self.Az)
+            self.Ax = sfft2(Ex)
+            self.Ay = sfft2(Ey)
 
         self.wz = np.copy(wz) if wz else self.wz
         self.wz[:] = fftshift(wz)
@@ -76,9 +79,6 @@ class FocalPropagator():
             np.real(np.conj(self.Ey)*self.Ey)
         # Maximum intensity so as to normalize the output values
         self.Imax = I.max()
-
-    # def get_fields(self):
-    #     return self.Ex, self.Ey, self.Ez
 
     def create_gamma(self):
         # p_size in terms of wavelength
@@ -91,18 +91,18 @@ class FocalPropagator():
         ny, nx = Ex.shape
         y, x = np.mgrid[-ny//2:ny//2, -nx//2:nx//2]
         umax = .5/p_size
-        beta = y/y.max()*umax
-        alpha = y/y.max()*umax
+        alpha = x/x.max()*umax
+        beta = -y/y.max()*umax
         
         theta2 = alpha*alpha + beta*beta
         self.wz = np.zeros((ny, nx), dtype=np.float_)
         np.sqrt(1-theta2, where=theta2 < 1, out=self.wz)
 
-        # self.Az = alpha * fft2(Ex) + beta * fft2(Ey) / (self.wz + 1e-16)
-        # self.Ez = ifft2(self.Az)
+        self.Az = (alpha * self.Ax + beta * self.Ay) / (self.wz + 1e-16)
+        self['Ez'] = sifft2(self.Az)
 
     def create_spectra(self):
-        Ex, Ey, Ez = self["Ex"], self["Ey"], self["Ez"]
+        Ex, Ey = self["Ex"], self["Ey"]
         if not isinstance(Ex, np.ndarray) and not isinstance(Ey, np.ndarray):
             raise ValueError("Ex, Ey must be specified")
         # Compute irradiance
@@ -111,13 +111,8 @@ class FocalPropagator():
         # Maximum intensity so as to normalize the output values
         self.Imax = I.max()
 
-        # self.alpha = fftshift(self.alpha)
-        # self.beta = fftshift(self.beta)
-        # self.gamma = fftshift(self.wz)
-
         # Compute the spectra
-        with set_workers(6):
-            self.Ax = fft2(Ex)
-            self.Ay = fft2(Ey)
-            self.Az = fft2(Ez)
-            # self.Az = self.alpha * self.Ax + self.beta * self.Ay / (self.gamma + 1e-16)
+        with set_workers(4):
+            self.Ax = sfft2(Ex)
+            self.Ay = sfft2(Ey)
+

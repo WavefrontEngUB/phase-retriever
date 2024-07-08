@@ -9,10 +9,6 @@ from .misc.file_selector import get_polarimetric_names, get_polarimetric_npz
 from .misc.central_region import find_rect_region
 from .misc.stokes import get_stokes_parameters
 
-
-fft = lambda field: fftshift(fft2(ifftshift(field)))
-ifft = lambda spectr: ifftshift(ifft2(fftshift(spectr)))
-
 def bound_rect_to_im(shape, rect):
     """Return correct rect coordinates, bound to the physical limits given by shape."""
     ny, nx = shape
@@ -42,9 +38,9 @@ def lowpass_filter(bw, *amps):
     mask = x*x + y*y < bw*bw
     filtered = []
     for A in amps:
-        a_ft = fft(A)
+        a_ft = fftshift(fft2(ifftshift(A)))
         a_ft *= mask
-        a_filt = ifft(a_ft)
+        a_filt = fftshift(ifft2(ifftshift(a_ft)))
         filtered.append(a_filt)
     return filtered
 
@@ -73,11 +69,6 @@ class SinglePhaseRetriever():
         self.options["n_max"] = n_max          # Maximum number of iterations
         self.options["mode"] = mode            # vectorial or scalar
 
-        self.alpha = None
-        self.beta = None
-        self.gamma = None
-        self.fields = {}  # Dictionary with the retrieved complex fields (Ex, Ey, Ez)
-
     def get(self, key):
         return self.options[key]
 
@@ -102,7 +93,7 @@ class SinglePhaseRetriever():
             self.options["path"] = path
             self.options["ext"] = ftype
 
-        self.polarimetric_sets = get_polarimetric_names(path, ftype=ftype)
+        self.polarimetric_sets, beam_name = get_polarimetric_names(path, ftype=ftype)
         if not self.polarimetric_sets:
             raise ValueError(f"Cannot load polarimetric images from {path}")
 
@@ -121,6 +112,7 @@ class SinglePhaseRetriever():
 
         # Compute irradiance
         self._compute_irradiance()
+        return beam_name
 
     def _compute_irradiance(self):
         # Compute only the irradiance in the initial plane
@@ -171,7 +163,7 @@ class SinglePhaseRetriever():
         """Center the window of size dim X dim on the region with the most energy content."""
         # We do it based on the total irradiance.
         if not self.images:
-            self.load_dataset()
+            _ = self.load_dataset()
         try:
             _ = self.irradiance.shape
         except:
@@ -198,7 +190,7 @@ class SinglePhaseRetriever():
     def _compute_spectrum(self):
         if not self.cropped:
             self._crop_images(*self.get("rect"))
-        ft = fft(self.cropped_irradiance)
+        ft = fftshift(fft2(ifftshift(self.cropped_irradiance)))
         self.a_ft = a_ft = np.real(np.conj(ft)*ft)
 
     def compute_bandwidth(self, tol=1e-4):
@@ -240,12 +232,11 @@ class SinglePhaseRetriever():
         ny, nx = np.mgrid[-n//2:n//2, -n//2:n//2]
         bandwidth_mask = (ny*ny+nx*nx < bw*bw)
         umax = .5/p_size
-        self.alpha = x = nx/nx.max()*umax
-        self.beta = y = ny/ny.max()*umax
+        x = nx/nx.max()*umax
+        y = ny/ny.max()*umax
         rho2 = x*x+y*y
         gamma = np.zeros((n, n), dtype=np.float_)
         np.sqrt(1-rho2, out=gamma, where=bandwidth_mask)
-        self.gamma = gamma
         zetes = list(self.images.keys())
         dz = (zetes[1]-zetes[0])/lamb
         H = np.exp(2j*np.pi*gamma*dz)
@@ -264,19 +255,18 @@ class SinglePhaseRetriever():
         self.reals = [mp.Array("d", range(0, int(n**2))), mp.Array("d", range(0, int(n**2)))]
         self.imags = [mp.Array("d", range(0, int(n**2))), mp.Array("d", range(0, int(n**2)))]
         # List with each of the processes, to keep track of them
-        eps = self.get("eps")
+        eps = self["eps"]
         self.processes = \
                 [mp.Process(target=multi, args=(H, self.options["n_max"], phi_0, *A_x),
-                    kwargs={"queue": self.queues[0], "eps": eps,
-                            "real": self.reals[0], "imag": self.imags[0]})
+                    kwargs={"queue":self.queues[0], "eps":eps,
+                            "real":self.reals[0], "imag":self.imags[0]})
                  if self.options["mode"] == "vectorial" else None,
                  mp.Process(target=multi, args=(H, self.options["n_max"], phi_0, *A_y),
-                    kwargs={"queue": self.queues[1], "eps": eps,
-                            "real": self.reals[1], "imag": self.imags[1]})]
+                    kwargs={"queue":self.queues[1], "eps":eps,
+                            "real":self.reals[1], "imag":self.imags[1]})]
         # Begin monitoring
         if monitor:
             self.monitor_process(*args)
-
         return A_x, A_y
 
     def update_function(self, *args):
@@ -325,62 +315,16 @@ class SinglePhaseRetriever():
             return ((np.asarray(self.reals[1])+1j*np.asarray(self.imags[1])).reshape((dim, dim)),
                     (np.asarray(self.reals[1])+1j*np.asarray(self.imags[1])).reshape((dim, dim)))
 
-    def set_fields(self, zeroFill=True):
-        """ Set the retrieved fileds in the object dictionary."""
+    def get_trans_fields(self, zeroFill=False):
+        """Return the transversal components of the field."""
         exphi_x, exphi_y = self.get_phases()  # if scalar, just the first (x) is not None
         if self.options["mode"] == "vectorial":
-            ex = self.A_x[0] * np.exp(1j*exphi_x)
-            ey = self.A_y[0] * np.exp(1j*exphi_y)
+            ex = self.A_x[0] * exphi_x
+            ey = self.A_y[0] * exphi_y
         else:
             ex = self.A_y[0] * np.exp(1j*exphi_x)
             ey = np.zeros_like(ex, dtype=np.complex_) if zeroFill else None
-
-        self.fields.update(Ex=ex, Ey=ey)
-
-        Ex_fft = fft(ex)
-        Ey_fft = fft(ey)
-        Ez_fft = (self.alpha * Ex_fft + self.beta * Ey_fft) / (self.gamma + 1e-16)
-
-        self.fields.update(Ez=ifft(Ez_fft))
-
-
-    def get_fields(self):
-        """Return the complex field at a given distance z."""
-        if not self.fields:
-            raise ValueError("Field not retrieved, yet!")
-
-        return self.fields['Ex'], self.fields['Ey'], self.fields['Ez']
-
-
-            # Ey = self.fields['Ey']
-            # Ez = self.fields['Ez']
-    #
-    #     else:
-    #         Ex_fft = fft(self.fields['Ex'])
-    #         Ey_fft = fft(self.fields['Ey'])
-    #         Ez_fft = fft(self.fields['Ey'])
-    #
-    #         H = np.exp(-2j * np.pi * self.gamma * z)
-    #         H[slef.alpha * slef.alpha + slef.beta * slef.beta >= 1] = 0
-    #         Ex_fft *= H
-    #         Ey_fft *= H
-    #         Ez_fft *= H
-    #         Ex = ifft(Ex_fft)
-    #         Ey = ifft(Ey_fft)
-    #         Ez = ifft(Ez_fft)
-    #
-    #     return Ex, Ey, Ez
-    #
-    #
-    # def get_trans_fields(self, z=0):
-    #     """Return the transversal components of the field. """
-    #     Ex, Ey, _ = self.get_fields(z, zeroFill)
-    #     return Ex, Ey
-    #
-    # def get_long_component(self, z=0):
-    #     """Return the longitudinal component of the field. """
-    #     _, _, Ez = self.get_fields(z, zeroFill)
-    #     return Ez
+        return ex, ey
 
     def get_stokes(self):
         irradiances = [self.cropped[0][pol] for pol in range(6)]
@@ -393,7 +337,7 @@ class SinglePhaseRetriever():
             if option in self.options:
                 self.options[option] = options[option]
                 if option == "path":
-                    self.load_dataset(options[option], ftype=self.options["ext"])
+                    _ = self.load_dataset(options[option], ftype=self.options["ext"])
                 elif option == "rect":
                     rect = options[option]
                     try:

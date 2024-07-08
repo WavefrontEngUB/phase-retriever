@@ -36,7 +36,7 @@ def test_basics():
     # Load dataset
     print("Dataset load... ", end="")
     try:
-        retriever.load_dataset("sims")
+        _ = retriever.load_dataset("sims")
         print(OK)
     except:
         print(FAIL)

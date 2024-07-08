@@ -120,10 +120,9 @@ class PhaseRetrieverGUI:
 
         # Load all image names
         # TODO: Add selector for fname kind
-        self.names_dict = get_polarimetric_names_kavan(self.set_directory)
+        self.names_dict, beam_name = get_polarimetric_names_kavan(self.set_directory)
         if not self.names_dict:
-            self.names_dict = get_polarimetric_names(self.set_directory,
-                    ftype="png")
+            self.names_dict, beam_name = get_polarimetric_names(self.set_directory, ftype="png")
         self.load_plots()
 
     def load_plots(self, event=None):
