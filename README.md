@@ -119,6 +119,12 @@ of the field.
 You can `Save` the configuration parameters, `Load` a previos configuration and 
 **`Export`** the results in the `File` menu.
 
+The configuration file is a JSON file with the parameters.
+Find in the test dataset folder an example for the test dataset.
+
+The export file is a `.npz`  Numpy file with the three complex field components,
+as `Ex`, `Ey` and `Ez` with `dtype=np.complex128`.
+
 
 ### Tests
 
