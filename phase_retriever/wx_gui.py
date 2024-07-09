@@ -183,6 +183,11 @@ class wxGUI(wx.Frame):
                 self.plotter.set_rectangle("Irradiance", top, width, width)
                 self._plot_irradiance()
                 self._plot_stokes()
+            elif key == 'roi':
+                self.roi = values[key]
+                self._plot_irradiance()
+                self._plot_stokes()
+                self.update_results(*self.propagator.propagate_field_to(0))
 
     def OnLoadClick(self, event):
         dialog = wx.DirDialog(self,
@@ -370,6 +375,7 @@ class wxGUI(wx.Frame):
         self.retriever._compute_spectrum()
 
         # Plot the relevant information...
+        self.roi = values["roi"]
         self._plot_irradiance()
         self._plot_stokes()
         self._plot_bandwidth()
@@ -403,7 +409,8 @@ class wxGUI(wx.Frame):
         self.plotter.set_imshow("Irradiance", self.retriever.irradiance, cmap="gray")
 
     def _plot_irradiance(self):
-        self.plotter.set_imshow("Cropped irradiance", self.retriever.cropped_irradiance, cmap="gray")
+        self.plotter.set_imshow("Cropped irradiance", self.retriever.cropped_irradiance,
+                                cmap="gray", roi=self.roi)
 
     def _plot_stokes(self):
         s0M = None
@@ -412,29 +419,29 @@ class wxGUI(wx.Frame):
             self.plotter.set_imshow("Cropped Stokes", stokes_image/s0M,
                                     title=f"$S_{idx}$",
                                     cmap="seismic", shape=(2,2),num=idx+1,
-                                    vmin=-1, vmax=1)
+                                    vmin=-1, vmax=1, roi=self.roi)
 
     def _plot_bandwidth(self):
         a_ft_log = np.log10(self.retriever.a_ft)
         self.plotter.set_imshow("Spectrum", a_ft_log, cmap="viridis")
 
     def update_results(self, Ex, Ey, Ez):
-
+        cmap_ph = "hsv"
         self.plotter.set_imshow("Results", abs(Ex), title="$|E_x|$",
-                                shape=(3, 2), num=1, cmap="gray")
+                                shape=(3, 2), num=1, cmap="gray", roi=self.roi)
         self.plotter.set_imshow("Results", np.angle(Ex), title="$\phi_x$",
-                                shape=(3, 2), num=2, cmap="hsv",
-                                vmin=-np.pi, vmax=np.pi)
+                                shape=(3, 2), num=2, cmap=cmap_ph,
+                                vmin=-np.pi, vmax=np.pi, roi=self.roi)
         self.plotter.set_imshow("Results", abs(Ey), title="$|E_y|$",
-                                shape=(3, 2), num=3, cmap="gray")
+                                shape=(3, 2), num=3, cmap="gray", roi=self.roi)
         self.plotter.set_imshow("Results", np.angle(Ey), title="$\phi_y$",
-                                shape=(3, 2), num=4, cmap="hsv",
-                                vmin=-np.pi, vmax=np.pi)
-        self.plotter.set_imshow("Results", abs(Ez), title="$|E_z|$",
-                                shape=(3, 2), num=5, cmap="gray")
+                                shape=(3, 2), num=4, cmap=cmap_ph,
+                                vmin=-np.pi, vmax=np.pi, roi=self.roi)
+        self.plotter.set_imshow("Results", abs(Ez)**2, title="$|E_z|$",
+                                shape=(3, 2), num=5, cmap="gray", roi=self.roi)
         self.plotter.set_imshow("Results", np.angle(Ez), title="$\phi_z$",
-                                shape=(3, 2), num=6, cmap="hsv",
-                                vmin=-np.pi, vmax=np.pi)
+                                shape=(3, 2), num=6, cmap=cmap_ph,
+                                vmin=-np.pi, vmax=np.pi, roi=self.roi)
 
 
 if __name__ == "__main__":

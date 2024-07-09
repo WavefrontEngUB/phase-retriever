@@ -9,7 +9,7 @@ def find_rect_region(array: np.ndarray , dim: int):
     except:
         raise ValueError("Input array must be 2D")
     # Create an array with a centered rectangle
-    rect = np.zeros((ny, nx), dtype=np.complex_)
+    rect = np.zeros((ny, nx), dtype=np.complex128)
     rect[(ny-dim//2)//2:(ny+dim//2)//2,
          (nx-dim//2)//2:(nx+dim//2)//2] = 1
     # Transform both arrays and multiply

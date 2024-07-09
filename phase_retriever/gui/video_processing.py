@@ -24,7 +24,7 @@ def propaga_video(Ux, Uy, y, x, circ, carpeta, nim=100, delta_z=40,
     maxIt = np.zeros(nim)
     # We assume non paraxiality, therefore we need to determine wz = kz/2pi
     over_l = 1/lamb
-    wz = np.sqrt(np.complex_(1/lamb/lamb-rho2))
+    wz = np.sqrt(np.complex128(1/lamb/lamb-rho2))
     # Writers for the videos
     if video:
         it_writer = imageio.get_writer(os.path.join(carpeta, "v_intensity.mp4"), fps=fps)

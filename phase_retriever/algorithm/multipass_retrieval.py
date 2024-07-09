@@ -26,7 +26,7 @@ def multi(H, niter, phi0, *As, verbose=False, queue=None, real=None, imag=None, 
         - alpha: Values of the acceleration parameters at each iteration
     """
     ny, nx = As[0].shape
-    xk = np.zeros((ny, nx), dtype=np.complex_)
+    xk = np.zeros((ny, nx), dtype=np.complex128)
     yk = np.zeros_like(xk)
     g_k1 = np.zeros_like(xk)
     g_k2 = np.zeros_like(xk)
@@ -34,7 +34,7 @@ def multi(H, niter, phi0, *As, verbose=False, queue=None, real=None, imag=None, 
     H_back = np.conj(H)**(len(As)-1)   # Back propagation from the final plane
     alphes = np.zeros(niter)
     mses = np.zeros(niter)
-    Ui = np.zeros(As[0].shape, dtype=np.complex_)
+    Ui = np.zeros(As[0].shape, dtype=np.complex128)
 
     k = 1/np.sum(As[0]**2)
     yk[:] = np.exp(1j*phi0)

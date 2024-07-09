@@ -284,7 +284,7 @@ class PhaseRetrieverGUI:
         self.y = y/self.n*umax
         self.x = x/self.n*umax
         rho2 = self.x*self.x+self.y*self.y
-        wz = np.sqrt(np.complex_(1/self.lamb**2-rho2))  # mm^-1, spatial frequency in the z direction
+        wz = np.sqrt(np.complex128(1/self.lamb**2-rho2))  # mm^-1, spatial frequency in the z direction
         # Check if all images are equally spaced. Work only with equally spaced images.
         old_delta = self.zetes[1]-self.zetes[0]
         max_i = 1000 

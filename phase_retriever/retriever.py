@@ -193,7 +193,7 @@ class SinglePhaseRetriever():
         ft = fftshift(fft2(ifftshift(self.cropped_irradiance)))
         self.a_ft = a_ft = np.real(np.conj(ft)*ft)
 
-    def compute_bandwidth(self, tol=1e-4):
+    def compute_bandwidth(self, tol=4e-6):
         if not self.cropped:
             self._crop_images(*self.get("rect"))
         # Compute the Fourier Transform of the cropped irradiance to get its bandwidth
@@ -323,7 +323,7 @@ class SinglePhaseRetriever():
             ey = self.A_y[0] * exphi_y
         else:
             ex = self.A_y[0] * np.exp(1j*exphi_x)
-            ey = np.zeros_like(ex, dtype=np.complex_) if zeroFill else None
+            ey = np.zeros_like(ex, dtype=np.complex128) if zeroFill else None
         return ex, ey
 
     def get_stokes(self):
@@ -351,6 +351,8 @@ class SinglePhaseRetriever():
             # Else, we raise an exception
             else:
                 raise KeyError(f"Option {option} does not exist.")
+        # print("Configuration updated: ")
+        # print(self.options)
 
 class PhaseRetriever(SinglePhaseRetriever):
     # TODO: Deriva un recuperador de fase que utilitzi multiprocessing per a recuperar dues

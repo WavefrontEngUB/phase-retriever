@@ -1,64 +1,52 @@
-from phase_retriever import PhaseRetriever
-from scipy.fft import fft2, ifft2, fftshift, ifftshift
+import os
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.fft import fft2, ifft2, fftshift, ifftshift
+
+from phase_retriever import PhaseRetriever
+from phase_retriever.misc.focalprop import FocalPropagator
+
 OK = "\033[0;32mOK\033[0;0m"
 FAIL = "\033[91mFAIL\033[0;0m"
 
-def get_Ez(Ex, Ey, pixel_size, lamb):
-    ny, nx = Ex.shape
-    y, x = np.mgrid[-ny//2:ny//2, -nx//2:nx//2]
-    # Cosinus directors
-    umax = .5/pixel_size*lamb
-    alpha = x/x.max()*umax
-    beta = y/y.max()*umax
-    gamma = np.zeros((ny, nx), dtype=np.float64)
-    rho2 = alpha*alpha+beta*beta
-    np.sqrt(1-rho2, where=rho2 < 1, out=gamma)
-
-    # Càlcul del camp per se
-    ft_Ex = fftshift(fft2(ifftshift(Ex)))
-    ft_Ey = fftshift(fft2(ifftshift(Ey)))
-    ft_Ez = alpha*ft_Ex+beta*ft_Ey
-    ft_Ez[gamma>0] /= gamma[gamma>0]
-
-    Ez = fftshift(ifft2(ifftshift(ft_Ez)))
-    return Ez
-
 def test_basics():
-    success = True
+    n_errors = 0
+
     retriever = PhaseRetriever()
-    pixel_size = 0.0469
+    pixel_size = 0.043
     lamb = 0.52
-    M = 1
-    p_eff = pixel_size/M/lamb
 
     # Load dataset
     print("Dataset load... ", end="")
+    module_dir = os.path.dirname(__file__)
+    test_data = os.path.join(module_dir, 'test_dataset')
     try:
-        _ = retriever.load_dataset("sims")
+        _ = retriever.load_dataset(test_data)
         print(OK)
     except:
         print(FAIL)
+        n_errors += 1
 
     print("Pixel size set... ", end="")
     try:
         retriever.config(pixel_size=pixel_size)
-        retriever.config(lamb=lamb)
-        if retriever.options["pixel_size"] != pixel_size:
-            raise ValueError()
+        gotten = retriever.options["pixel_size"]
+        assert gotten == pixel_size
         print(OK)
     except:
-        print(FAIL, f"Expected {0.1} and got{retriever.config[pixel_size]}")
+        print(FAIL, f"Expected {pixel_size} and got {gotten}")
+        n_errors += 1
 
     print("Wavelength set... ", end="")
+
     try:
         retriever.config(lamb=lamb)
-        if retriever.options["pixel_size"] != pixel_size:
-            raise ValueError()
+        gotten = retriever.options["lamb"]
+        assert gotten == lamb
         print(OK)
     except:
-        print(FAIL, f"Expected {0.1} and got{retriever.config[pixel_size]}")
+        print(FAIL, f"Expected {lamb} and got {gotten}")
+        n_errors += 1
 
     print("Window centering... ", end="")
     try:
@@ -66,6 +54,7 @@ def test_basics():
         print(OK)
     except:
         print(FAIL)
+        n_errors += 1
 
     print("Phase origin selection... ", end="")
     try:
@@ -73,53 +62,66 @@ def test_basics():
         print(OK)
     except:
         print(FAIL)
+        n_errors += 1
 
     print("Bandiwdth determination... ", end="")
     try:
-        retriever.compute_bandwidth(tol=4e-6)
+        retriever.compute_bandwidth()
         print(OK)
     except:
         print(FAIL)
+        n_errors += 1
+
+    print("  All loaded options:  ")
     for option in retriever.options:
         print(option, retriever.options[option])
 
     Ax, Ay = retriever.retrieve()
-    print(len(retriever.mse[0]))
+    print("Number of iterations done:", len(retriever.mse[0]))
 
-    ephi_x, ephi_y = retriever.get_phases()
+    propagator = FocalPropagator()
+    Ex, Ey = retriever.get_trans_fields()
+    propagator["Ex"] = Ex
+    propagator["Ey"] = Ey
+    propagator["pixel_size"] = pixel_size
+    propagator.create_spectra()
+    propagator.create_gamma()
+    Ex, Ey, Ez = propagator.propagate_field_to(0)
 
-    Ez = get_Ez(Ax[0]*ephi_x, Ay[0]*ephi_y, pixel_size, lamb)
+    ground_t = np.load(os.path.join(test_data, "Sim_retrieved.npz"))
+    Ex_gt, Ey_gt, Ez_gt = ground_t["Ex"], ground_t["Ey"], ground_t["Ez"]
 
-    data = np.load("sims_retrieved/phases.npz")
-    data_A = np.load("sims_retrieved/amplitudes.npz")
-    Ez_gui = get_Ez(data["phi_x"]*data_A["Ax"], data["phi_y"]*data_A["Ay"], pixel_size, lamb)
-    cmap = "twilight_shifted"
-    fig, ax = plt.subplots(2, 3, constrained_layout=True)
-    ax[0, 1].imshow(np.angle(ephi_x), cmap=cmap, interpolation="nearest")
-    ax[0, 2].imshow(np.angle(data["phi_x"]), cmap=cmap, interpolation="nearest")
-    ax[1, 1].imshow(np.angle(ephi_y), cmap=cmap, interpolation="nearest")
-    ax[1, 2].imshow(np.angle(data["phi_y"]), cmap=cmap, interpolation="nearest")
 
-    ax[0, 0].imshow(Ax[0], cmap="gray")
-    ax[1, 0].imshow(Ay[0], cmap="gray")
-
-    ax[0, 1].set_title("This program")
-    ax[0, 2].set_title("GUI result")
-
-    fig2, ax2 = plt.subplots(1, 2, constrained_layout=True)
-    ax2[0].imshow(np.real(np.conj(Ez_gui)*Ez_gui), cmap="gray")
-    ax2[1].imshow(np.real(np.conj(Ez)*Ez), cmap="gray")
-    ax2[0].set_title("E_z GUI")
-    ax2[1].set_title("E_z this program")
-
-    fig3, ax3 = plt.subplots(1, 2, constrained_layout=True)
+    fig0, ax0 = plt.subplots(1, 2, constrained_layout=True)
     msx, msy = retriever.mse
-    ax3[0].plot(msx)
-    ax3[1].plot(msy)
+    ax0[0].plot(msx)
+    ax0[1].plot(msy)
+
+    cmap = "twilight_shifted"
+    fig, ax = plt.subplots(3, 4, constrained_layout=True)
+    ax[0, 0].set_title("This test")
+    ax[0, 1].set_title("Ground truth")
+    ax[0, 2].set_title("This test")
+    ax[0, 3].set_title("Ground truth")
+    ax[0, 0].imshow(Ax[0], cmap="gray")
+    ax[0, 1].imshow(np.abs(Ex_gt), cmap="gray")
+    ax[1, 0].imshow(Ay[0], cmap="gray")
+    ax[1, 1].imshow(np.abs(Ey_gt), cmap="gray")
+    ax[2, 0].imshow(np.abs(Ez), cmap="gray")
+    ax[2, 1].imshow(np.abs(Ez_gt), cmap="gray")
+    ax[0, 2].imshow(np.angle(Ex), cmap=cmap, interpolation="nearest")
+    ax[0, 3].imshow(np.angle(Ex_gt), cmap=cmap, interpolation="nearest")
+    ax[1, 2].imshow(np.angle(Ey), cmap=cmap, interpolation="nearest")
+    ax[1, 3].imshow(np.angle(Ey_gt), cmap=cmap, interpolation="nearest")
+    ax[2, 2].imshow(np.angle(Ez), cmap=cmap, interpolation="nearest")
+    ax[2, 3].imshow(np.angle(Ez_gt), cmap=cmap, interpolation="nearest")
+
+    print(f"Errors found: {n_errors}")
+    print("Compare results... ")
 
     plt.show()
 
-    return success
+    return n_errors
 
 if __name__ == "__main__":
     test_basics()

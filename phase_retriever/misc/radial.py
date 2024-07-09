@@ -27,6 +27,9 @@ def get_function_radius(array, tol=1e-4):
     
     if radius:
         return abs(radius[0]-r0)
+    else:
+        print("No radius found")
+        return 0
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt

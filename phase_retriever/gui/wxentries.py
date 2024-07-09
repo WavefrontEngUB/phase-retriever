@@ -1,6 +1,13 @@
 import wx
 import wx.propgrid
 
+DEFAULT_WAVELENGTH = 0.52
+DEFAULT_PIXELSIZE = 0.043
+DEFAULT_NITERATIONS = 120
+DEFAULT_WINDOWSIZE = 256
+DEFAULT_BANDWIDTH = 20
+DEFAULT_ROISIZE = 128
+
 class TextedEntry(wx.Panel):
     def __init__(self, parent, text):
         super().__init__(parent)
@@ -70,18 +77,34 @@ class wxEntryPanel(wx.Panel):
         self.pgrid = pgrid = wx.propgrid.PropertyGrid(self, name="EntryPanel")
 
         pgrid.Append(wx.propgrid.PropertyCategory("Dataset path"))
-        pgrid.Append(wx.propgrid.StringProperty("Working Directory", name="path", value=""))
-        pgrid.Append(wx.propgrid.EnumProperty("Input files extension", name="ext", choices=wx.propgrid.PGChoices(choices["ext"])))
+        pgrid.Append(wx.propgrid.StringProperty("Working Directory",
+                                                name="path", value=""))
+        pgrid.Append(wx.propgrid.EnumProperty("Input files extension", name="ext",
+                                              choices=wx.propgrid.PGChoices(choices["ext"])))
         pgrid.Append(wx.propgrid.PropertyCategory("Measurement properties"))
-        pgrid.Append(wx.propgrid.FloatProperty("Wavelength (um)", name="lambda", value=0.52))
-        pgrid.Append(wx.propgrid.FloatProperty("Pixel size (um)", name="pixel_size", value=3.75))
-        pgrid.Append(wx.propgrid.EnumProperty("Mode", name="mode", choices=wx.propgrid.PGChoices(choices["mode"])))
+        pgrid.Append(wx.propgrid.FloatProperty("Wavelength (um)", name="lambda",
+                                               value=DEFAULT_WAVELENGTH))
+        pgrid.Append(wx.propgrid.FloatProperty("Pixel size (um)", name="pixel_size",
+                                               value=DEFAULT_PIXELSIZE))
+        pgrid.Append(wx.propgrid.EnumProperty("Mode", name="mode",
+                                              choices=wx.propgrid.PGChoices(choices["mode"])))
         pgrid.Append(wx.propgrid.PropertyCategory("Retrieving configuration"))
-        pgrid.Append(wx.propgrid.IntProperty("Number of iterations", name="n_iter", value=120))
-        pgrid.Append(wx.propgrid.IntProperty("Window size", name="window_size", value=128))
-        pgrid.Append(wx.propgrid.ArrayStringProperty("Window center", name="window_center", value=["0", "0"]))
-        pgrid.Append(wx.propgrid.ArrayStringProperty("Phase origin", name="phase_origin", value=["0", "0"]))
-        pgrid.Append(wx.propgrid.FloatProperty("Bandwidth (pixels)", name="bandwidth", value=20))
+        pgrid.Append(wx.propgrid.IntProperty("Number of iterations", name="n_iter",
+                                             value=DEFAULT_NITERATIONS))
+        pgrid.Append(wx.propgrid.IntProperty("Window size", name="window_size",
+                                             value=DEFAULT_WINDOWSIZE))
+        pgrid.Append(wx.propgrid.ArrayStringProperty("Window center",
+                                                     name="window_center",
+                                                     value=["0", "0"]))
+        pgrid.Append(wx.propgrid.ArrayStringProperty("Phase origin",
+                                                     name="phase_origin",
+                                                     value=["0", "0"]))
+        pgrid.Append(wx.propgrid.FloatProperty("Bandwidth (pixels)",
+                                               name="bandwidth",
+                                               value=DEFAULT_BANDWIDTH))
+        pgrid.Append(wx.propgrid.PropertyCategory("Exploration"))
+        pgrid.Append(wx.propgrid.IntProperty("ROI size", name="roi",
+                                             value=DEFAULT_ROISIZE))
 
         sizer.Add(pgrid, 2, wx.EXPAND | wx.RIGHT)
         sizer.Add(polEntry, 1, wx.EXPAND | wx.RIGHT)
@@ -98,7 +121,8 @@ class wxEntryPanel(wx.Panel):
                 "bandwidth": pgrid.GetPropertyByName("bandwidth"),
                 "path": pgrid.GetPropertyByName("path"),
                 "ext": pgrid.GetPropertyByName("ext"),
-                "mode": pgrid.GetPropertyByName("mode")
+                "mode": pgrid.GetPropertyByName("mode"),
+                "roi": pgrid.GetPropertyByName("roi")
                 }
 
     def GetButton(self, name):

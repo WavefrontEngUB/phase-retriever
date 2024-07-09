@@ -8,6 +8,7 @@ import tkinter.ttk as ttk
 
 from .interface import PhaseRetrieverGUI
 from .wx_gui import wxGUI
+from .test import test_basics
 
 PROGRAM_NAME = "Phase retriever"
 
@@ -45,6 +46,7 @@ def print_help(error_code=0, epilog=''):
     print(f"  demo:           Launches the program with a test dataset already loaded.")
     print(f"  download_data:  Downloads the test dataset on the current directory "
           f"or in the specified in <path>.")
+    print(f"  test:           Run the test suite.")
     print(f"")
     print(f"  -h, -help:      Show this help message.")
     print(f"")
@@ -61,6 +63,9 @@ if __name__ == "__main__":
     for arg in sys.argv[1:]:
         if arg in ["-h", "-help"]:
             print_help(0)
+        elif arg == "test":
+            err = test_basics()
+            sys.exit(err)
         elif arg == "demo":
             DEMO_FLAG = True
         elif arg.startswith("download_data"):
@@ -72,7 +77,6 @@ if __name__ == "__main__":
 
     module_dir = os.path.dirname(__file__)
     test_data = os.path.join(module_dir, 'test_dataset')
-    print(" -------> ", test_data)
     data_dir = test_data if DEMO_FLAG else ""
 
     if DOWNLOAD_FLAG:

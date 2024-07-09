@@ -84,21 +84,23 @@ class FocalPropagator():
         # p_size in terms of wavelength
         p_size = self["pixel_size"]
         Ex, Ey = self["Ex"], self["Ey"]
+
         if p_size is None:
             raise ValueError("p_size must be specified")
         if not isinstance(Ex, np.ndarray) and not isinstance(Ey, np.ndarray):
             raise ValueError("Ex, Ey must be specified")
         ny, nx = Ex.shape
         y, x = np.mgrid[-ny//2:ny//2, -nx//2:nx//2]
-        umax = .5/p_size
+        umax = .5 / p_size
         alpha = x/x.max()*umax
         beta = -y/y.max()*umax
         
         theta2 = alpha*alpha + beta*beta
-        self.wz = np.zeros((ny, nx), dtype=np.float_)
+        self.wz = np.zeros((ny, nx), dtype=np.float64)
         np.sqrt(1-theta2, where=theta2 < 1, out=self.wz)
 
-        self.Az = (alpha * self.Ax + beta * self.Ay) / (self.wz + 1e-16)
+        self.Az = (alpha * self.Ax + beta * self.Ay)
+        self.Az[self.wz > 0] /= (self.wz[self.wz > 0] + 1e-16)
         self['Ez'] = sifft2(self.Az)
 
     def create_spectra(self):
