@@ -36,9 +36,9 @@ Find below the help message
 ```
 $ python -m phase_retriever -help
 
-Description: Phase retriever is a GUI powered software to retrieve the fase of a highly focused electromagnetic field,
-by taking as input two recording planes separated some distance nearby the focus.                                     
-It also reconstruct the longitudinal component.                                                                       
+Description: Phase retriever is a GUI powered software to retrieve the fase of
+a highly focused electromagnetic field, by taking as input two recording planes
+separated some distance nearby the focus. It also reconstruct the longitudinal component.                                                                       
 To do so, it is necessary to provide polarimetric images of both z-planes.                                            
 
 usage: python -m phase_retriever [test|demo|download_data=<path>] [-h|-help]
