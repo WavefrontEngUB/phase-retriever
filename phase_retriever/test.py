@@ -21,7 +21,7 @@ def test_basics():
     module_dir = os.path.dirname(__file__)
     test_data = os.path.join(module_dir, 'test_dataset')
     try:
-        _ = retriever.load_dataset(test_data)
+        beam_name = retriever.load_dataset(test_data)
         print(OK)
     except:
         print(FAIL)
@@ -88,7 +88,7 @@ def test_basics():
     propagator.create_gamma()
     Ex, Ey, Ez = propagator.propagate_field_to(0)
 
-    ground_t = np.load(os.path.join(test_data, "Sim_retrieved.npz"))
+    ground_t = np.load(os.path.join(test_data, f"{beam_name}_retrieved.npz"))
     Ex_gt, Ey_gt, Ez_gt = ground_t["Ex"], ground_t["Ey"], ground_t["Ez"]
 
 

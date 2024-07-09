@@ -40,12 +40,12 @@ def print_help(error_code=0, epilog=''):
           f"It also reconstruct the longitudinal component.\nTo do so, it is necessary "
           f"to provide polarimetric images of both z-planes.")
     print(f"")
-    print(f"usage: {program_cmd} [demo|download_data=<path>] [-h|-help]")
+    print(f"usage: {program_cmd} [test|demo|download_data=<path>] [-h|-help]")
     print(f"")
     print(f"Options:")
     print(f"  demo:           Launches the program with a test dataset already loaded.")
     print(f"  download_data:  Downloads the test dataset on the current directory "
-          f"or in the specified in <path>.")
+          f"or in the specified in the optional <path>.")
     print(f"  test:           Run the test suite.")
     print(f"")
     print(f"  -h, -help:      Show this help message.")

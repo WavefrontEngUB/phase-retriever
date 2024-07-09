@@ -21,4 +21,4 @@ phase_retriever.egg-info/
 *.egg
 
  # test files
-!testRad_*
+!testRad*

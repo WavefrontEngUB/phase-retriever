@@ -1,0 +1,19 @@
+{
+    "bandwidth": 17.5,
+    "ext": 0,
+    "lamb": 0.52,
+    "mode": 0,
+    "n_iter": 120,
+    "path": "C:\\Users\\dmaluenda\\kk\\phase_retriever_dataset",
+    "phase_origin": [
+        "129",
+        "120"
+    ],
+    "pixel_size": 0.043,
+    "roi": 128,
+    "window_center": [
+        "509",
+        "515"
+    ],
+    "window_size": 256
+}

@@ -309,6 +309,7 @@ class wxGUI(wx.Frame):
         configs = self.entries.GetValues()
         # Open a dialog to ask where to save it
         with wx.FileDialog(self, "Save configuration", wildcard="*.json",
+                           defaultFile=self.beam_name + ".json",
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as dialog:
             if dialog.ShowModal() == wx.ID_CANCEL:
                 return
