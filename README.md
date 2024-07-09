@@ -74,19 +74,20 @@ The `<polarization>` is the polarization analyzer and it can be
 The test dataset looks like this
 ```
 └───phase_retriever_dataset
-        testRad_retrieved.npz
-        testRad_z0_a0.png
-        testRad_z0_a135.png
-        testRad_z0_a45.png
-        testRad_z0_a90.png
-        testRad_z0_aDex.png
-        testRad_z0_aLev.png
-        testRad_z2_a0.png
-        testRad_z2_a135.png
-        testRad_z2_a45.png
-        testRad_z2_a90.png
-        testRad_z2_aDex.png
-        testRad_z2_aLev.png
+        testRad.json            # Config file (to be able to recall the default parameters)
+        testRad_retrieved.npz   # Already retrieved file (for testing)
+        testRad_z0_a0.png       # Vertical polarization, first plane
+        testRad_z0_a135.png     # Antidiag. polarization, first plane
+        testRad_z0_a45.png      # Diagonal polarization, first plane
+        testRad_z0_a90.png      # Horizontal polarization, first plane
+        testRad_z0_aDex.png     # Circ.Right polarization, first plane
+        testRad_z0_aLev.png     # Circ.Left polarization, first plane
+        testRad_z2_a0.png       # Vertical polarization, second plane (2 microns behind)
+        testRad_z2_a135.png     # Antidiag. polarization, second plane
+        testRad_z2_a45.png      # Diagonal polarization, second plane
+        testRad_z2_a90.png      # Horizontal polarization, second plane
+        testRad_z2_aDex.png     # Circ.Right polarization, second plane
+        testRad_z2_aLev.png     # Circ.Left polarization, second plane
 
 ```
 
