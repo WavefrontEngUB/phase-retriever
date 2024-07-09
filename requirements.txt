@@ -1,6 +1,6 @@
-regex
-numpy
-scipy
-imageio
-matplotlib
-wxPython
+regex<2024.6
+numpy<2.1
+scipy<1.15
+imageio<2.35
+matplotlib<3.10
+wxPython<4.3

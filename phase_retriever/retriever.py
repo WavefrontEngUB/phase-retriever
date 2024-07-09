@@ -235,7 +235,7 @@ class SinglePhaseRetriever():
         x = nx/nx.max()*umax
         y = ny/ny.max()*umax
         rho2 = x*x+y*y
-        gamma = np.zeros((n, n), dtype=np.float_)
+        gamma = np.zeros((n, n), dtype=np.float64)
         np.sqrt(1-rho2, out=gamma, where=bandwidth_mask)
         zetes = list(self.images.keys())
         dz = (zetes[1]-zetes[0])/lamb

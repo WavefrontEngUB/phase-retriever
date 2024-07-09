@@ -1,6 +1,4 @@
 __pycache__/
-Cir_s25/
-Cir_s5/
 *.py[cod]
 *$py.class
 *.json
@@ -9,7 +7,6 @@ Cir_s5/
 *.mp4
 *.odg
 *.png
-!Sim_*.png
 *.xcf
 *.npy
 *.npz
@@ -22,3 +19,6 @@ Cir_s5/
 *.npz
 phase_retriever.egg-info/
 *.egg
+
+ # test files
+!testRad_*

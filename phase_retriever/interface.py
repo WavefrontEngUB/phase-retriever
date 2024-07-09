@@ -454,7 +454,7 @@ def delta_z(nom_pol):
     I = []
     for nom in nom_pol:
         # IMPORTANT: Convert to floats or signed ints before proceeding
-        I.append(imageio.imread(nom).astype(np.float_))
+        I.append(imageio.imread(nom).astype(np.float64))
     delta = np.arctan2(I[4]-I[5], I[2]-I[3])
     return delta
 
