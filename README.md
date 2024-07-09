@@ -55,7 +55,7 @@ Options:
 
 ```
 
-### Data
+#### Data
 
 The phase retrieval algorithm requires 12 polarimetric images, six for two z-planes.
 
@@ -92,7 +92,7 @@ The test dataset looks like this
 ```
 
 
-### GUI
+#### GUI explanation via demo
 
 Run
 
@@ -131,7 +131,7 @@ The export file is a `.npz`  Numpy file with the three complex field components,
 as `Ex`, `Ey` and `Ez` with `dtype=np.complex128`.
 
 
-### Tests
+#### Tests
 
 Run
 
