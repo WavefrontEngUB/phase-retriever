@@ -23,7 +23,7 @@ Fineup's backpropagation algorithm.
 
     ```
     python -m phase_retriever
-    ```
+
     and enjoy.
 
 ## Usage
@@ -36,19 +36,23 @@ Find below the help message
 ```
 $ python -m phase_retriever -help
 
-Description: Phase retriever is a GUI powered software to retrieve the fase of
-a highly focused electromagnetic field, by taking as input two recording planes
-separated some distance nearby the focus. It also reconstruct the longitudinal component.                                                                       
-To do so, it is necessary to provide polarimetric images of both z-planes.                                            
+Description: Phase retriever is a GUI powered software to retrieve the fase of 
+a highly focused electromagnetic field, by taking as input two recording 
+planes separated some distance nearby the focus. It also reconstruct the 
+longitudinal component. To do so, it is necessary to provide polarimetric 
+images of both z-planes.
 
 usage: python -m phase_retriever [test|demo|download_data=<path>] [-h|-help]
 
 Options:
-  demo:           Launches the program with a test dataset already loaded.
-  download_data:  Downloads the test dataset on the current directory or in the specified in the optional <path>.
+  download_data:  Downloads the test dataset on the current directory or 
+                  in the specified in the optional <path>.
+  demo:           Launches the program with a test dataset already loaded. 
+                  *It can be combined with download_data.*
   test:           Run the test suite.
 
   -h, -help:      Show this help message.
+
 ```
 
 ### Data

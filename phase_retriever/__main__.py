@@ -43,9 +43,10 @@ def print_help(error_code=0, epilog=''):
     print(f"usage: {program_cmd} [test|demo|download_data=<path>] [-h|-help]")
     print(f"")
     print(f"Options:")
-    print(f"  demo:           Launches the program with a test dataset already loaded.")
     print(f"  download_data:  Downloads the test dataset on the current directory "
           f"or in the specified in the optional <path>.")
+    print(f"  demo:           Launches the program with a test dataset already loaded."
+          f" *It can be combined with download_data.*")
     print(f"  test:           Run the test suite.")
     print(f"")
     print(f"  -h, -help:      Show this help message.")
