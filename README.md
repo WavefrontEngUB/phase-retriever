@@ -10,7 +10,7 @@ Fineup's backpropagation algorithm.
     conda create -n phase_ret_env python pip
     conda activate phase_ret_env
     ```
-    alternativelly, you can use virtualenv if desired.
+    alternativelly, you can use virtualenv, if desired.
 
 
 * Install via pip+github
@@ -19,18 +19,18 @@ Fineup's backpropagation algorithm.
     pip install https://github.com/WavefrontEngUB/phase-retriever/archive/refs/heads/main.zip
     ```
      
-* Run it just by
+* Run it, just launching
 
     ```
     python -m phase_retriever
-
+    ```
     and enjoy.
 
 ## Usage
 
 Since this program is a GUI, it is not needed to add any argument to the command line.
 However, there are some options that can be used to download the test dataset, 
-run the test suite or launch the program with the test dataset already loaded.
+launch the program with the test dataset preloaded or just run the test suite.
 
 Find below the help message
 ```
@@ -139,4 +139,9 @@ Run
 
 to run the test suite.
 
-At the end, you can compare the retrieved field with the one stored in the test dataset.
+At the end, you can compare the retrieved field with the one stored in the test dataset, 
+considered as the ground truth.
+
+## Troubleshooting
+
+bla bla bla
