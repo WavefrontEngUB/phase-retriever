@@ -144,4 +144,12 @@ considered as the ground truth.
 
 ## Troubleshooting
 
-bla bla bla
+We have detected some troubles for using wyPython on Linux distributions (also on MacOs X). It is usually fixed just by installing the next prerequisites before installing this `phase-retriever` module.
+
+Be sure that the target environ is activated before installing the prerequisites.
+
+    pip install wheel
+    sudo apt update
+    sudo apt-get install libgtk-3-dev python3-tk
+
+Then, you can install this `phase-retriever` in the current environ as descrived in the first section.
