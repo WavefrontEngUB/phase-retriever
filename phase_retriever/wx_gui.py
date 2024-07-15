@@ -98,6 +98,8 @@ class wxGUI(wx.Frame):
         self.entries.GetButton("search").Bind(wx.EVT_BUTTON, self.OnLoadClick)
         self.entries.GetButton("autoadjust").Bind(wx.EVT_BUTTON, self.OnAutoadjust)
         self.entries.GetButton("begin").Bind(wx.EVT_BUTTON, self.OnRetrieve)
+        self.entries.GetButton("begin").Disable()
+
 
         # Explorer tab
         # self.explorer = explorer = DataExplorer(notebook)
@@ -225,8 +227,13 @@ class wxGUI(wx.Frame):
 
         # Replot everything
         self._reconfig()
-        self.plotter.set_colorbar("Cropped Stokes", share=(0,1,2,3))
+
         self.plotter.select_page("Spectrum")
+
+        # Enable the begin button and disable the Search button
+        self.entries.GetButton("begin").Enable()
+        self.entries.GetButton("search").Disable()
+
 
     # def OnStartProcessing(self, event):
     #     # Check if pixel_size is properly set, needed to do any assignment
@@ -263,6 +270,7 @@ class wxGUI(wx.Frame):
         wx.CallLater(delta_t, self.retriever.monitor_process, plot)
         wx.CallLater(delta_t, self.OnCheckCompletion)
         self.plotter.select_page("MSE")
+        self.entries.GetButton("autoadjust").Disable()
 
     def OnCheckCompletion(self, event=None):
         if self.retriever.finished:
@@ -415,12 +423,15 @@ class wxGUI(wx.Frame):
 
     def _plot_stokes(self):
         s0M = None
+        isnew = []
         for idx, stokes_image in enumerate(self.retriever.get_stokes()):
             s0M = s0M or stokes_image.max()
-            self.plotter.set_imshow("Cropped Stokes", stokes_image/s0M,
-                                    title=f"$S_{idx}$",
-                                    cmap="seismic", shape=(2,2),num=idx+1,
-                                    vmin=-1, vmax=1, roi=self.roi)
+            isnew.append(self.plotter.set_imshow("Cropped Stokes", stokes_image/s0M,
+                                                 title=f"$S_{idx}$",
+                                                 cmap="seismic", shape=(2,2),num=idx+1,
+                                                 vmin=-1, vmax=1, roi=self.roi))
+        if any(isnew):
+            self.plotter.set_colorbar("Cropped Stokes", share=(0, 1, 2, 3))
 
     def _plot_bandwidth(self):
         a_ft_log = np.log10(self.retriever.a_ft)

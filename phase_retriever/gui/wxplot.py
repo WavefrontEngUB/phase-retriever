@@ -91,10 +91,12 @@ class PlotsNotebook(wx.Panel):
 
     def set_imshow(self, name, image, title='', cmap="viridis",
                    shape=(1, 1), num=1, vmin=None, vmax=None, roi=None):
+        new = False
         if name not in self.pages:
             fig = self.add(name).figure
             ax = fig.add_subplot(*shape, num)
             ax.imshow(np.zeros((16, 16)), cmap=cmap, vmin=vmin, vmax=vmax)
+            new = True
         idx = self.pages[name]
         plot = self.nb.GetPage(idx)
         canvas = plot.canvas
@@ -126,6 +128,8 @@ class PlotsNotebook(wx.Panel):
         # ax.grid()
         canvas.flush_events()
         canvas.draw()
+
+        return new
 
     def set_rectangle(self, name, position, w, h, color="green"):
         if name not in self.pages:
