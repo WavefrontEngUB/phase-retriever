@@ -255,6 +255,8 @@ class wxGUI(wx.Frame):
         top, bottom = self.retriever.center_window()
         rect_center = top[0]+window_size//2, top[1]+window_size//2
         topR, bottomR = self.retriever.center_window(ref_beam_size=window_sizeR)
+        if topR is None:
+            topR = [0, 0]
         rect_centerR = topR[0] + window_sizeR // 2, topR[1] + window_sizeR // 2
         # Adjust the phase origin
         self.retriever.select_phase_origin()
@@ -438,7 +440,8 @@ class wxGUI(wx.Frame):
         bw = values["bandwidth"]*2
         # Change configurations on the retriever
         self.retriever.config(path=values["path"], lamb=values["lamb"],
-                rect=(top, bottom), bandwidth=bw/2, dim=width, pixel_size=values["pixel_size"], n_max=values["n_iter"])
+                              rect=(top, bottom), bandwidth=bw/2, dim=width,
+                              pixel_size=values["pixel_size"], n_iter=values["n_iter"])
 
         # Plot the relevant information...
         self.roi = values["roi"]

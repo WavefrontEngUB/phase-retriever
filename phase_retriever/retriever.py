@@ -47,12 +47,12 @@ def lowpass_filter(bw, *amps):
 
 class SinglePhaseRetriever():
     # TODO: Crea una classe que encapsuli completament el metode de recuperacio de fase
-    def __init__(self, n_max=200, mode='vectorial'):
+    def __init__(self, n_iter=200, mode='vectorial'):
         self.options = {"pixel_size": None,  # MUST BE SCALED ACCORDING TO THE WAVELENGTH
                         "dim": 256,
                         "rect": None,
                         "rectR": None,
-                        "n_max": n_max,
+                        "n_iter": n_iter,
                         "eps": 0.01,
                         "bandwidth": None,
                         "origin": None,
@@ -68,7 +68,7 @@ class SinglePhaseRetriever():
         self.a_ft = None
         self.mse = [[], []]
 
-        self.options["n_max"] = n_max          # Maximum number of iterations
+        self.options["n_iter"] = n_iter          # Maximum number of iterations
         self.options["mode"] = mode            # vectorial or scalar
 
     def get(self, key):
@@ -155,8 +155,9 @@ class SinglePhaseRetriever():
                     continue
                 image = self.images[z][polarization]
 
-                ref = (image[topR[0]:bottomR[0], topR[1]:bottomR[1]].mean()
-                       if topR and bottomR else 1)
+                imref = (image[topR[0]:bottomR[0], topR[1]:bottomR[1]]
+                         if topR and bottomR else np.array([]))
+                ref = (imref.mean() if imref.size > 0 else 1)
 
                 cropped = image[y0:y1, x0:x1] / ref
                 self.cropped[z][polarization] = cropped
@@ -185,9 +186,13 @@ class SinglePhaseRetriever():
 
         irradiance = self.irradiance
         win_size = self.get("dim")
-        if ref_beam_size:  # ignoring MAIN region of interest
+        if ref_beam_size is not None:  # ignoring MAIN region of interest
             if not self.cropped:
                 raise Exception("First crop the images to the MAIN region of interest")
+            if ref_beam_size == 0:
+                self["rectR"] = None, None
+                return None, None
+
             t, b = self["rect"]
             irradiance[t[0]:b[0], t[1]:b[1]] = 0
             win_size = ref_beam_size
@@ -285,11 +290,11 @@ class SinglePhaseRetriever():
         # List with each of the processes, to keep track of them
         eps = self["eps"]
         self.processes = \
-                [mp.Process(target=multi, args=(H, self.options["n_max"], phi_0, *A_x),
+                [mp.Process(target=multi, args=(H, self.options["n_iter"], phi_0, *A_x),
                     kwargs={"queue":self.queues[0], "eps":eps,
                             "real":self.reals[0], "imag":self.imags[0]})
                  if self.options["mode"] == "vectorial" else None,
-                 mp.Process(target=multi, args=(H, self.options["n_max"], phi_0, *A_y),
+                 mp.Process(target=multi, args=(H, self.options["n_iter"], phi_0, *A_y),
                     kwargs={"queue":self.queues[1], "eps":eps,
                             "real":self.reals[1], "imag":self.imags[1]})]
         # Begin monitoring
@@ -359,7 +364,7 @@ class SinglePhaseRetriever():
         return get_stokes_parameters(irradiances)
 
     def config(self, **options):
-        #def config(self, pixel_size=None, dim=256, n_max=200, eps=0.01, radius=None, origin=None):
+        #def config(self, pixel_size=None, dim=256, n_iter=200, eps=0.01, radius=None, origin=None):
         for option in options:
             # If the option is in the list, we change it...
             if option in self.options:
@@ -386,4 +391,4 @@ class PhaseRetriever(SinglePhaseRetriever):
     # TODO: Deriva un recuperador de fase que utilitzi multiprocessing per a recuperar dues
     # fases a la vegada.
     def __init__(sef, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)

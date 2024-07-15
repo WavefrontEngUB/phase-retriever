@@ -64,7 +64,7 @@ if __name__ == "__main__":
     DOWNLOAD_FLAG = False
 
     module_dir = os.path.dirname(__file__)
-    test_data = os.path.join(module_dir, 'test_dataset')
+    test_data = os.path.join(module_dir, 'test_dataset', 'simulated')
 
     data_dir = os.getcwd()
 
