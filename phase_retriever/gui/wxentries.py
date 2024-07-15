@@ -5,7 +5,8 @@ DEFAULT_WAVELENGTH = 0.52
 DEFAULT_PIXELSIZE = 0.043
 DEFAULT_NITERATIONS = 120
 DEFAULT_WINDOWSIZE = 256
-DEFAULT_BANDWIDTH = 20
+DEFAULT_WINDOWSIZE_R = 64
+DEFAULT_BANDWIDTH = 0
 DEFAULT_ROISIZE = 64
 
 choices = { "ext": ["png", "npy"],
@@ -47,7 +48,8 @@ class DirectorySelector(wx.Panel):
         #hsizer = wx.BoxSizer(wx.HORIZONTAL)
 
         self.button = button = wx.Button(self, label="Search directory")
-        self.auto_butt = autobut = wx.Button(self, label="Autoadjust")
+        self.cent_butt = centbut = wx.Button(self, label="Center beam")
+        self.auto_butt = autobut = wx.Button(self, label="Check bandwidth")
         self.ret_butt = ret_butt = wx.Button(self, label="Begin retrieval")
         self.export_butt = export_butt = wx.Button(self, label="Export results")
 
@@ -57,6 +59,7 @@ class DirectorySelector(wx.Panel):
 
         #sizer.Add(hsizer,  0, wx.CENTRE | wx.EXPAND)
         sizer.Add(button,   0, wx.CENTRE)
+        sizer.Add(centbut,  0, wx.CENTRE)
         sizer.Add(autobut,  0, wx.CENTRE)
         sizer.Add(ret_butt, 0, wx.CENTRE)
         sizer.Add(export_butt, 0, wx.CENTRE)
@@ -101,6 +104,11 @@ class wxEntryPanel(wx.Panel):
         pgrid.Append(wx.propgrid.ArrayStringProperty("Phase origin",
                                                      name="phase_origin",
                                                      value=["0", "0"]))
+        pgrid.Append(wx.propgrid.ArrayStringProperty("Reference center",
+                                                     name="window_centerR",
+                                                     value=["0", "0"]))
+        pgrid.Append(wx.propgrid.IntProperty("Reference size", name="window_sizeR",
+                                             value=DEFAULT_WINDOWSIZE_R))
         pgrid.Append(wx.propgrid.FloatProperty("Bandwidth (pixels)",
                                                name="bandwidth",
                                                value=DEFAULT_BANDWIDTH))
@@ -122,6 +130,8 @@ class wxEntryPanel(wx.Panel):
                 "window_size": pgrid.GetPropertyByName("window_size"),
                 "window_center": pgrid.GetPropertyByName("window_center"),
                 "phase_origin": pgrid.GetPropertyByName("phase_origin"),
+                "window_sizeR": pgrid.GetPropertyByName("window_sizeR"),
+                "window_centerR": pgrid.GetPropertyByName("window_centerR"),
                 "bandwidth": pgrid.GetPropertyByName("bandwidth"),
                 "path": pgrid.GetPropertyByName("path"),
                 "ext": pgrid.GetPropertyByName("ext"),
@@ -133,6 +143,8 @@ class wxEntryPanel(wx.Panel):
     def GetButton(self, name):
         if name == "search":
             button = self.polEntry.button
+        elif name == "center":
+            button = self.polEntry.cent_butt
         elif name == "autoadjust":
             button = self.polEntry.auto_butt
         elif name == "begin":

@@ -8,6 +8,7 @@ from .misc.radial import get_function_radius
 from .misc.file_selector import get_polarimetric_names, get_polarimetric_npz
 from .misc.central_region import find_rect_region
 from .misc.stokes import get_stokes_parameters
+# from .misc.print import print
 
 def bound_rect_to_im(shape, rect):
     """Return correct rect coordinates, bound to the physical limits given by shape."""
@@ -50,6 +51,7 @@ class SinglePhaseRetriever():
         self.options = {"pixel_size": None,  # MUST BE SCALED ACCORDING TO THE WAVELENGTH
                         "dim": 256,
                         "rect": None,
+                        "rectR": None,
                         "n_max": n_max,
                         "eps": 0.01,
                         "bandwidth": None,
@@ -77,6 +79,7 @@ class SinglePhaseRetriever():
 
     def __setitem__(self, key, value):
         # TODO: Check types correctly
+        # print(f"Retriever: setting {key} to {value}")
         self.config(**{key:value})
 
     def load_dataset(self, path=None, ftype="png"):
@@ -130,9 +133,15 @@ class SinglePhaseRetriever():
 
         self.irradiance /= 3
 
-    def _crop_images(self, top, bottom):
+    def _crop_images(self):
         if not self.images:
             raise ValueError("Images not yet loaded")
+
+        if not self.get("rect"):
+            raise ValueError("Window not yet specified")
+
+        top, bottom = self.get("rect")
+        topR, bottomR = self.get("rectR") if self.get("rectR") else (None, None)
 
         y0, x0 = top
         y1, x1 = bottom
@@ -145,7 +154,11 @@ class SinglePhaseRetriever():
                 if type(polarization) != int:
                     continue
                 image = self.images[z][polarization]
-                cropped = image[y0:y1, x0:x1]
+
+                ref = (image[topR[0]:bottomR[0], topR[1]:bottomR[1]].mean()
+                       if topR and bottomR else 1)
+
+                cropped = image[y0:y1, x0:x1] / ref
                 self.cropped[z][polarization] = cropped
                 if first:
                     # We also compute the cropped irradiance
@@ -159,7 +172,7 @@ class SinglePhaseRetriever():
         z_idx = z_idx if z_idx is not None else 0
         return list(imgs[zetes[z_idx]].values())
 
-    def center_window(self):
+    def center_window(self, ref_beam_size=None):
         """Center the window of size dim X dim on the region with the most energy content."""
         # We do it based on the total irradiance.
         if not self.images:
@@ -169,11 +182,26 @@ class SinglePhaseRetriever():
         except:
             # Irradiance not yet computed
             self._compute_irradiance()
-        top, bottom = find_rect_region(self.irradiance, self.get("dim"))
 
-        # Now, we crop all images to the region specified by the top, bottom pair of coords.
-        self["rect"] = top, bottom
-        self._crop_images(top, bottom)
+        irradiance = self.irradiance
+        win_size = self.get("dim")
+        if ref_beam_size:  # ignoring MAIN region of interest
+            if not self.cropped:
+                raise Exception("First crop the images to the MAIN region of interest")
+            t, b = self["rect"]
+            irradiance[t[0]:b[0], t[1]:b[1]] = 0
+            win_size = ref_beam_size
+
+        top, bottom = find_rect_region(irradiance, win_size)
+
+        if ref_beam_size:
+            # Now, we crop all images to the region specified by the top, bottom pair of coords.
+            self["rectR"] = top, bottom
+        else:
+            self["rect"] = top, bottom
+
+        self._crop_images()
+
         return top, bottom
 
     def select_phase_origin(self):
@@ -189,13 +217,13 @@ class SinglePhaseRetriever():
 
     def _compute_spectrum(self):
         if not self.cropped:
-            self._crop_images(*self.get("rect"))
+            self._crop_images()
         ft = fftshift(fft2(ifftshift(self.cropped_irradiance)))
         self.a_ft = a_ft = np.real(np.conj(ft)*ft)
 
     def compute_bandwidth(self, tol=1e-5):
         if not self.cropped:
-            self._crop_images(*self.get("rect"))
+            self._crop_images()
         # Compute the Fourier Transform of the cropped irradiance to get its bandwidth
         self._compute_spectrum()
         r = get_function_radius(self.a_ft, tol=tol)/2
@@ -338,7 +366,7 @@ class SinglePhaseRetriever():
                 self.options[option] = options[option]
                 if option == "path":
                     _ = self.load_dataset(options[option], ftype=self.options["ext"])
-                elif option == "rect":
+                elif option == "rect" or option == "rectR":
                     rect = options[option]
                     try:
                         shape = self.irradiance.shape
@@ -347,7 +375,7 @@ class SinglePhaseRetriever():
                     top, bottom = rect # if rect is passed, nothing else is needed
                     self.options[option] = [top, bottom]
                     # Finally, recompute the cropped images!
-                    self._crop_images(top, bottom)
+                    self._crop_images()
             # Else, we raise an exception
             else:
                 raise KeyError(f"Option {option} does not exist.")

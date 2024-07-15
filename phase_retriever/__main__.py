@@ -40,9 +40,11 @@ def print_help(error_code=0, epilog=''):
           f"It also reconstruct the longitudinal component.\nTo do so, it is necessary "
           f"to provide polarimetric images of both z-planes.")
     print(f"")
-    print(f"usage: {program_cmd} [test|demo|download_data=<path>] [-h|-help]")
+    print(f"usage: {program_cmd} [test|demo|download_data=<path>|path=<path>] [-h|-help]")
     print(f"")
     print(f"Options:")
+    print(f"  path=<path>:    Set the path to the dataset. If not set, the program will "
+          f"will search data in the current directory.")
     print(f"  download_data:  Downloads the test dataset on the current directory "
           f"or in the specified in the optional <path>.")
     print(f"  demo:           Launches the program with a test dataset already loaded."
@@ -61,24 +63,30 @@ if __name__ == "__main__":
     DEMO_FLAG = False
     DOWNLOAD_FLAG = False
 
+    module_dir = os.path.dirname(__file__)
+    test_data = os.path.join(module_dir, 'test_dataset')
+
+    data_dir = os.getcwd()
+
+    verbose = False
     for arg in sys.argv[1:]:
         if arg in ["-h", "-help"]:
             print_help(0)
+        elif arg == "-v":
+            verbose = True
         elif arg == "test":
             err = test_basics()
             sys.exit(err)
         elif arg == "demo":
             DEMO_FLAG = True
+            data_dir = test_data
         elif arg.startswith("download_data"):
             DOWNLOAD_FLAG = True
             download_path = arg.split("=")[1] if '=' in arg else '.'
+        elif arg.startswith("path"):
+            data_dir = arg.split("=")[1] if '=' in arg else ''
         else:
             print_help(1, "Unknown option")
-
-
-    module_dir = os.path.dirname(__file__)
-    test_data = os.path.join(module_dir, 'test_dataset')
-    data_dir = test_data if DEMO_FLAG else ""
 
     if DOWNLOAD_FLAG:
         from distutils.dir_util import copy_tree

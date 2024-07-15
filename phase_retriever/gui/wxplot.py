@@ -42,12 +42,14 @@ class Plot(wx.Panel):
 
     def set_rectangle(self, position, w, h, color="green"):
         """Draw a rectangle at a given position with width w and height h."""
-        if not "rectangle" in self.patches:
-            rect = self.patches["rectangle"] = Rectangle((0, 0), 1, 1, color=color, fill=True,
-                    alpha=0.2)
+
+        label = "rectangle_" + color
+        if not label in self.patches:
+            rect = self.patches[label] = Rectangle((0, 0), 1, 1, color=color, fill=True,
+                                                       alpha=0.2)
             self.figure.axes[0].add_patch(rect)
         else:
-            rect = self.patches["rectangle"]
+            rect = self.patches[label]
         # We transform the coordinates of the rectangle, as position is assumed to be its center,
         # while matplotlib requires its position from the lower left corner.
         x_llc, y_llc = position[1], position[0]
@@ -107,20 +109,20 @@ class PlotsNotebook(wx.Panel):
         ax = figure.axes[num-1]
 
         ny, nx = image.shape
-        roi = roi or nx
-        roix, roiy = (roi//2, roi//2)
+        roix = roi or nx
+        roiy = roi or ny
 
-        im_roi = image[nx//2-roix:nx//2+roix, ny//2-roiy:ny//2+roiy]
+        im_roi = image[ny//2-roiy//2:ny//2+roiy//2, nx//2-roix//2:nx//2+roix//2]
 
         vmin = vmin or image.min()
         vmax = vmax or image.max()
 
         ax_img = ax.get_images()[0]
-        ax_img.set_extent([0, roi, roi, 0])
+        ax_img.set_extent([0, roix, roiy, 0])
         ax_img.set_data(im_roi)
         ax_img.set_clim(vmin, vmax)
-        ax.set_xticks([0, int(roix/2), int(roix), int(roix*3/2), roix*2])
-        ax.set_yticks([0, int(roiy/2), int(roiy), int(roiy*3/2), roiy*2])
+        ax.set_xticks([0, int(roix/4), int(roix/2), int(roix*3/4), roix])
+        ax.set_yticks([0, int(roiy/4), int(roiy/2), int(roiy*3/4), roiy])
         if title:
             text_color = 'white' if (name=="Results" and num%2==1) else 'black'
             ax.annotate(title, (0.95, 0.07), xycoords='axes fraction',

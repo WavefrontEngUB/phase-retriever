@@ -1,4 +1,5 @@
 import os.path
+import sys
 
 import wx
 from wx.lib.agw.floatspin import EVT_FLOATSPIN
@@ -84,6 +85,8 @@ class wxGUI(wx.Frame):
         if search_dir:
             self._load_data()
 
+        self.Maximize(True) if sys.platform == "Linux" else None
+
     def init(self):
         # Initializing the plotter
         self.plotter = plotter = PlotsNotebook(self)
@@ -97,11 +100,13 @@ class wxGUI(wx.Frame):
         self.entries = entries = wxEntryPanel(notebook)
         self.entries.GetPgrid().Bind(EVT_PG_CHANGED, self.OnSpecChange)
         self.entries.GetButton("search").Bind(wx.EVT_BUTTON, self.OnLoadClick)
+        self.entries.GetButton("center").Bind(wx.EVT_BUTTON, self.OnCenter)
         self.entries.GetButton("autoadjust").Bind(wx.EVT_BUTTON, self.OnAutoadjust)
         self.entries.GetButton("begin").Bind(wx.EVT_BUTTON, self.OnRetrieve)
         self.entries.GetButton("export").Bind(wx.EVT_BUTTON, self.OnExport)
 
         # Disable some buttons
+        self.entries.GetButton("center").Disable()
         self.entries.GetButton("autoadjust").Disable()
         self.entries.GetButton("begin").Disable()
         self.entries.GetButton("export").Disable()
@@ -155,44 +160,74 @@ class wxGUI(wx.Frame):
         values = self.entries.GetValues()
         # FIXME: Change wxentries so that its keys are the same as those of the retriever
         for key in values:
-            if key == "lamb":
-                self.retriever["lamb"] = values[key]
-
-            elif key == "n_iter":
-                self.retriever["n_max"] = values[key]
+            curr_value = values[key]
+            if key in ("lamb", "n_iter"):  # The basics ones
+                self.retriever[key] = curr_value
 
             elif key == "bandwidth":
-                self.retriever[key] = bw = values[key]
-                width = values["window_size"]
-                self.plotter.set_circle("Spectrum", (width // 2, width // 2), 2 * bw,
-                                        color="red")
+                if curr_value > 0:
+                    self.retriever[key] = bw = curr_value
+                    width = values["window_size"]
+                    self.plotter.set_circle("Spectrum", (width//2, width//2), 2*bw,
+                                            color="red")
             elif key == "window_size":
-                width = values[key]
+                width = curr_value
                 if width != self.retriever["dim"]:
                     self.retriever["dim"] = width
                     rect_center = values["window_center"]
                     top = [int(i) - width // 2 for i in rect_center]
-                    bottom = [int(i) + width // 2 for i in rect_center]
-                    self.plotter.set_rectangle("Irradiance", top, width, width)
+                    self.plotter.set_rectangle("RAW Irradiance", top, width, width)
 
             elif key == "window_center":
-                rect_center = values[key]
-                top = [int(i) - width // 2 for i in rect_center]
-                bottom = [int(i) + width // 2 for i in rect_center]
-                self.retriever["rect"] = [top, bottom]
-                # The retriever will tell us if the rect coordinates are the correct ones
-                top, bottom = self.retriever["rect"]
-                width = self.retriever["dim"]
-                center = [str(int(i) + width // 2) for i in top]
-                # Set the correct values in the entry widget
-                self.entries.SetValue(window_center=center)
-                # Finally, set the rectangle visible on screen
-                self.plotter.set_rectangle("Irradiance", top, width, width)
-                self._plot_irradiance()
-                self._plot_stokes()
+                rect_center = curr_value
+                if rect_center != self.retriever["rect"]:
+                    width = values["window_size"]
+                    top = [int(i) - width // 2 for i in rect_center]
+                    bottom = [int(i) + width // 2 for i in rect_center]
+                    self.retriever["rect"] = [top, bottom]
+                    # The retriever will tell us if the rect coordinates are the correct ones
+                    top, bottom = self.retriever["rect"]
+                    width = self.retriever["dim"]
+                    center = [str(int(i) + width // 2) for i in top]
+                    # Set the correct values in the entry widget
+                    self.entries.SetValue(window_center=center)
+                    # Finally, set the rectangle visible on screen
+                    self.plotter.set_rectangle("RAW Irradiance", top, width, width)
+                    self._plot_stokes()
+
+            elif key == "window_sizeR":
+                widthR = curr_value
+                dimRR = self.retriever["rectR"][1][0] - self.retriever["rectR"][0][0]
+                if widthR != dimRR:
+                    rect_centerR = values["window_centerR"]
+                    topR = [int(i) - widthR // 2 for i in rect_centerR]
+                    bottomR = [int(i) + widthR // 2 for i in rect_centerR]
+                    self.retriever["rectR"] = [topR, bottomR]
+                    self.plotter.set_rectangle("RAW Irradiance", topR, widthR, widthR,
+                                               color="red")
+                    self._plot_stokes()
+
+            elif key == "window_centerR":
+                rect_centerR = curr_value
+                if rect_centerR != self.retriever["rectR"]:
+
+                    topR = [int(i) - widthR // 2 for i in rect_centerR]
+                    bottomR = [int(i) + widthR // 2 for i in rect_centerR]
+                    self.retriever["rectR"] = [topR, bottomR]
+                    # The retriever will tell us if the rect coordinates are the correct ones
+                    topR, bottomR = self.retriever["rectR"]
+                    widthR = self.retriever["rectR"][1][0] - self.retriever["rectR"][0][0]
+                    centerR = [str(int(i) + widthR // 2) for i in topR]
+                    # Set the correct values in the entry widget
+                    self.entries.SetValue(window_centerR=centerR)
+                    # Finally, set the rectangle visible on screen
+                    self.plotter.set_rectangle("RAW Irradiance", topR, widthR, widthR,
+                                               color="red")
+                    self._plot_stokes()
+
             elif key == 'roi' or key == 'z_exp':
                 self.roi = values['roi']
-                self._plot_irradiance()
+                # self._plot_irradiance()
                 self._plot_stokes()
                 self.update_results(*self.propagator.propagate_field_to(0))  # values['z_exp']
 
@@ -211,24 +246,34 @@ class wxGUI(wx.Frame):
         dialog.Destroy()
         self._load_data()
 
-    def OnAutoadjust(self, event):
-        # TODO
+    def OnCenter(self, event):
         # We center the window with the size given by the entries.
         configs = self.entries.GetValues()
         window_size = configs["window_size"]
+        window_sizeR = configs["window_sizeR"]
         self.retriever.config(dim=window_size)
         top, bottom = self.retriever.center_window()
         rect_center = top[0]+window_size//2, top[1]+window_size//2
+        topR, bottomR = self.retriever.center_window(ref_beam_size=window_sizeR)
+        rect_centerR = topR[0] + window_sizeR // 2, topR[1] + window_sizeR // 2
         # Adjust the phase origin
         self.retriever.select_phase_origin()
         phase_origin = self.retriever.options["origin"]
+        self.entries.SetValue(window_center=[str(x) for x in rect_center],
+                              window_centerR=[str(x) for x in rect_centerR],
+                              phase_origin=[str(x) for x in phase_origin])
+
+        # Replot everything
+        self._reconfig()
+
+        self.plotter.select_page("Cropped Stokes")
+
+    def OnAutoadjust(self, event):
         self.retriever.compute_bandwidth()
         bw = self.retriever.options["bandwidth"]
 
         # Set the autoadjusted values to the entry panel
-        self.entries.SetValue(bandwidth=bw, 
-                window_center=[str(x) for x in rect_center],
-                phase_origin=[str(x) for x in phase_origin])
+        self.entries.SetValue(bandwidth=bw)
 
         # Replot everything
         self._reconfig()
@@ -250,6 +295,8 @@ class wxGUI(wx.Frame):
     #         error_dialog.ShowModal()
 
     def OnRetrieve(self, event):
+        self.entries.GetButton("center").Disable()
+        self.entries.GetButton("autoadjust").Disable()
         # Prepare the plotting page if it didn't exist
         try:
             plot = self.plotter.get_page("MSE")
@@ -275,7 +322,6 @@ class wxGUI(wx.Frame):
         wx.CallLater(delta_t, self.retriever.monitor_process, plot)
         wx.CallLater(delta_t, self.OnCheckCompletion)
         self.plotter.select_page("MSE")
-        self.entries.GetButton("autoadjust").Disable()
 
     def OnCheckCompletion(self, event=None):
         if self.retriever.finished:
@@ -301,6 +347,7 @@ class wxGUI(wx.Frame):
         self.propagator.create_spectra()
         self.propagator.create_gamma()
         self.update_results(*self.propagator.propagate_field_to(0))
+        self.entries.GetButton("begin").Disable()
         self.entries.GetButton("export").Enable()
 
     def OnExplore(self, event):
@@ -380,27 +427,33 @@ class wxGUI(wx.Frame):
     def _reconfig(self):
         # First, we need to get all the configurations from the entries
         values = self.entries.GetValues()
-        bw = values["bandwidth"]*2
         rect_center = values["window_center"]
         width = values["window_size"]
         top = [int(i)-width//2 for i in rect_center]
         bottom = [int(i)+width//2 for i in rect_center]
+        rect_centerR = values["window_centerR"]
+        widthR = values["window_sizeR"]
+        topR = [int(i)-widthR//2 for i in rect_centerR]
+        bottomR = [int(i)+widthR//2 for i in rect_centerR]
+        bw = values["bandwidth"]*2
         # Change configurations on the retriever
         self.retriever.config(path=values["path"], lamb=values["lamb"],
                 rect=(top, bottom), bandwidth=bw/2, dim=width, pixel_size=values["pixel_size"], n_max=values["n_iter"])
-        self.retriever._compute_spectrum()
 
         # Plot the relevant information...
         self.roi = values["roi"]
-        self._plot_irradiance()
+        # self._plot_irradiance()
         self._plot_stokes()
-        self._plot_bandwidth()
 
-        # Draw the rectangle and circle specifiying the region of interest and the
-        # bandwidth.
-        self.plotter.set_rectangle("Irradiance", top, width, width)
-        # Draw the bandwidth
-        self.plotter.set_circle("Spectrum", (width//2, width//2), bw, color="red")
+        # Draw the rectangles and circle specifiying the region of interest
+        self.plotter.set_rectangle("RAW Irradiance", top, width, width)
+        self.plotter.set_rectangle("RAW Irradiance", topR, widthR, widthR, color="red")
+
+        # Draw the bandwidth if so
+        if bw:
+            self.retriever._compute_spectrum()
+            self._plot_bandwidth()
+            self.plotter.set_circle("Spectrum", (width//2, width//2), bw, color="red")
 
     def _load_data(self):
         # We now update the entry to contain the selected path
@@ -412,6 +465,7 @@ class wxGUI(wx.Frame):
 
             # We show the important images through the plots
             self._show_dataset()
+            self.entries.GetButton("center").Enable()
             self.entries.GetButton("autoadjust").Enable()
         except:
             error_dialog = wx.MessageDialog(self, f"Selected directory does not "
@@ -423,11 +477,12 @@ class wxGUI(wx.Frame):
     def _show_dataset(self):
         # Irradiance plots with the rectangle indicating where exactly the window is
         # located.
-        self.plotter.set_imshow("Irradiance", self.retriever.irradiance, cmap="gray")
+        # np.save("irradiance.npy", self.retriever.irradiance)
+        self.plotter.set_imshow("RAW Irradiance", self.retriever.irradiance, cmap="gray")
 
-    def _plot_irradiance(self):
-        self.plotter.set_imshow("Cropped irradiance", self.retriever.cropped_irradiance,
-                                cmap="gray", roi=self.roi)
+    # def _plot_irradiance(self):
+    #     self.plotter.set_imshow("Cropped irradiance", self.retriever.cropped_irradiance,
+    #                             cmap="gray", roi=self.roi)
 
     def _plot_stokes(self):
         s0M = None
