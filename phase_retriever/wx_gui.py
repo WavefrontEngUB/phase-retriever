@@ -183,11 +183,11 @@ class wxGUI(wx.Frame):
                 self.plotter.set_rectangle("Irradiance", top, width, width)
                 self._plot_irradiance()
                 self._plot_stokes()
-            elif key == 'roi':
-                self.roi = values[key]
+            elif key == 'roi' or key == 'z_exp':
+                self.roi = values['roi']
                 self._plot_irradiance()
                 self._plot_stokes()
-                self.update_results(*self.propagator.propagate_field_to(0))
+                self.update_results(*self.propagator.propagate_field_to(0))  # values['z_exp']
 
     def OnLoadClick(self, event):
         dialog = wx.DirDialog(self,
@@ -257,7 +257,7 @@ class wxGUI(wx.Frame):
             ax.clear()
             ax.plot([], [])
         # Then, we call the retriever to commence the process
-        self.retriever.config(mode=self.entries.GetValue("mode"))
+        self.retriever.config(mode="vectorial")  # self.entries.GetValue("mode")
         self.retriever.config(pixel_size=self.entries.GetValue("pixel_size"))
         self.retriever.retrieve(args=(plot,), monitor=False)
         wx.CallLater(delta_t, self.retriever.monitor_process, plot)
