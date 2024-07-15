@@ -6,7 +6,7 @@ DEFAULT_PIXELSIZE = 0.043
 DEFAULT_NITERATIONS = 120
 DEFAULT_WINDOWSIZE = 256
 DEFAULT_BANDWIDTH = 20
-DEFAULT_ROISIZE = 128
+DEFAULT_ROISIZE = 64
 
 choices = { "ext": ["png", "npy"],
             "mode": ["vectorial", "scalar"]
@@ -49,6 +49,7 @@ class DirectorySelector(wx.Panel):
         self.button = button = wx.Button(self, label="Search directory")
         self.auto_butt = autobut = wx.Button(self, label="Autoadjust")
         self.ret_butt = ret_butt = wx.Button(self, label="Begin retrieval")
+        self.export_butt = export_butt = wx.Button(self, label="Export results")
 
         #self.info = info = TextedEntry(self, text)
 
@@ -58,6 +59,7 @@ class DirectorySelector(wx.Panel):
         sizer.Add(button,   0, wx.CENTRE)
         sizer.Add(autobut,  0, wx.CENTRE)
         sizer.Add(ret_butt, 0, wx.CENTRE)
+        sizer.Add(export_butt, 0, wx.CENTRE)
 
         self.SetSizer(sizer)
 
@@ -135,6 +137,8 @@ class wxEntryPanel(wx.Panel):
             button = self.polEntry.auto_butt
         elif name == "begin":
             button = self.polEntry.ret_butt
+        elif name == "export":
+            button = self.polEntry.export_butt
         return button
 
     def GetTextEntry(self, *args):

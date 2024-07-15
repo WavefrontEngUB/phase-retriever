@@ -193,7 +193,7 @@ class SinglePhaseRetriever():
         ft = fftshift(fft2(ifftshift(self.cropped_irradiance)))
         self.a_ft = a_ft = np.real(np.conj(ft)*ft)
 
-    def compute_bandwidth(self, tol=4e-6):
+    def compute_bandwidth(self, tol=1e-5):
         if not self.cropped:
             self._crop_images(*self.get("rect"))
         # Compute the Fourier Transform of the cropped irradiance to get its bandwidth

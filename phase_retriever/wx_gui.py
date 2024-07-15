@@ -80,8 +80,9 @@ class wxGUI(wx.Frame):
 
         self.propagator = FocalPropagator()
 
+        self.dirname = search_dir
         if search_dir:
-            self._load_data(search_dir)
+            self._load_data()
 
     def init(self):
         # Initializing the plotter
@@ -98,8 +99,12 @@ class wxGUI(wx.Frame):
         self.entries.GetButton("search").Bind(wx.EVT_BUTTON, self.OnLoadClick)
         self.entries.GetButton("autoadjust").Bind(wx.EVT_BUTTON, self.OnAutoadjust)
         self.entries.GetButton("begin").Bind(wx.EVT_BUTTON, self.OnRetrieve)
-        self.entries.GetButton("begin").Disable()
+        self.entries.GetButton("export").Bind(wx.EVT_BUTTON, self.OnExport)
 
+        # Disable some buttons
+        self.entries.GetButton("autoadjust").Disable()
+        self.entries.GetButton("begin").Disable()
+        self.entries.GetButton("export").Disable()
 
         # Explorer tab
         # self.explorer = explorer = DataExplorer(notebook)
@@ -199,12 +204,12 @@ class wxGUI(wx.Frame):
         res = dialog.ShowModal()
         if res == wx.ID_OK:
             # Retain a reference of the user selected path
-            dirname = dialog.GetPath()
+            self.dirname = dialog.GetPath()
         elif res == wx.ID_CANCEL:
             dialog.Destroy()
             return
         dialog.Destroy()
-        self._load_data(dirname)
+        self._load_data()
 
     def OnAutoadjust(self, event):
         # TODO
@@ -296,6 +301,7 @@ class wxGUI(wx.Frame):
         self.propagator.create_spectra()
         self.propagator.create_gamma()
         self.update_results(*self.propagator.propagate_field_to(0))
+        self.entries.GetButton("export").Enable()
 
     def OnExplore(self, event):
         """ Not used, but it is a method to explore the phase retrieval results
@@ -341,7 +347,8 @@ class wxGUI(wx.Frame):
             except IOError:
                 wx.LogError(f"Can't load configuration from file {path}")
         self.entries.SetValue(**configs)
-        self._load_data(configs["path"])
+        self.dirname = configs["path"]
+        self._load_data()
         self._reconfig()
 
     def OnExport(self, event):
@@ -352,7 +359,7 @@ class wxGUI(wx.Frame):
             basename = self.beam_name + "_retrieved.npz"
 
             with wx.FileDialog(self, "Save recovered data",
-                               os.getcwd(), basename,
+                               self.dirname, basename,
                                style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
                                wildcard="*.npz") as save_dialog:
                 if save_dialog.ShowModal() == wx.ID_CANCEL:
@@ -395,22 +402,23 @@ class wxGUI(wx.Frame):
         # Draw the bandwidth
         self.plotter.set_circle("Spectrum", (width//2, width//2), bw, color="red")
 
-    def _load_data(self, dirname):
+    def _load_data(self):
         # We now update the entry to contain the selected path
-        self.entries.SetValue(path=dirname)
+        self.entries.SetValue(path=self.dirname)
 
         # Finally, we load all images into the phase retriever
         try:
-            self.beam_name = self.retriever.load_dataset(dirname, ftype=self.entries.GetValue("ext"))
+            self.beam_name = self.retriever.load_dataset(self.dirname, ftype=self.entries.GetValue("ext"))
+
+            # We show the important images through the plots
+            self._show_dataset()
+            self.entries.GetButton("autoadjust").Enable()
         except:
             error_dialog = wx.MessageDialog(self, f"Selected directory does not "
                                                   f"contain polarimetric images.  "
                                                   f"{self.entries.GetValue('ext')}",
                                             style=wx.ICON_ERROR | wx.OK)
             error_dialog.ShowModal()
-
-        # We show the important images through the plots
-        self._show_dataset()
 
     def _show_dataset(self):
         # Irradiance plots with the rectangle indicating where exactly the window is
