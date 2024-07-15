@@ -10,7 +10,7 @@ Fineup's backpropagation algorithm.
     conda create -n phase_ret_env python pip
     conda activate phase_ret_env
     ```
-    alternativelly, you can use virtualenv if desired.
+    alternativelly, you can use virtualenv, if desired.
 
 
 * Install via pip+github
@@ -18,19 +18,23 @@ Fineup's backpropagation algorithm.
     ```
     pip install https://github.com/WavefrontEngUB/phase-retriever/archive/refs/heads/main.zip
     ```
+
+    It can take quite long for building the wxPython wheel...
+
+    If some error is trigered during the installation, please check the Troubleshooting section below.
      
-* Run it just by
+* Run it, just launching
 
     ```
     python -m phase_retriever
-
+    ```
     and enjoy.
 
 ## Usage
 
 Since this program is a GUI, it is not needed to add any argument to the command line.
 However, there are some options that can be used to download the test dataset, 
-run the test suite or launch the program with the test dataset already loaded.
+launch the program with the test dataset preloaded or just run the test suite.
 
 Find below the help message
 ```
@@ -55,7 +59,7 @@ Options:
 
 ```
 
-### Data
+#### Data
 
 The phase retrieval algorithm requires 12 polarimetric images, six for two z-planes.
 
@@ -74,24 +78,25 @@ The `<polarization>` is the polarization analyzer and it can be
 The test dataset looks like this
 ```
 └───phase_retriever_dataset
-        testRad_retrieved.npz
-        testRad_z0_a0.png
-        testRad_z0_a135.png
-        testRad_z0_a45.png
-        testRad_z0_a90.png
-        testRad_z0_aDex.png
-        testRad_z0_aLev.png
-        testRad_z2_a0.png
-        testRad_z2_a135.png
-        testRad_z2_a45.png
-        testRad_z2_a90.png
-        testRad_z2_aDex.png
-        testRad_z2_aLev.png
+        testRad.json            # Config file (to be able to recall the default parameters)
+        testRad_retrieved.npz   # Already retrieved file (for testing)
+        testRad_z0_a0.png       # Vertical polarization, first plane
+        testRad_z0_a135.png     # Antidiag. polarization, first plane
+        testRad_z0_a45.png      # Diagonal polarization, first plane
+        testRad_z0_a90.png      # Horizontal polarization, first plane
+        testRad_z0_aDex.png     # Circ.Right polarization, first plane
+        testRad_z0_aLev.png     # Circ.Left polarization, first plane
+        testRad_z2_a0.png       # Vertical polarization, second plane (2 microns behind)
+        testRad_z2_a135.png     # Antidiag. polarization, second plane
+        testRad_z2_a45.png      # Diagonal polarization, second plane
+        testRad_z2_a90.png      # Horizontal polarization, second plane
+        testRad_z2_aDex.png     # Circ.Right polarization, second plane
+        testRad_z2_aLev.png     # Circ.Left polarization, second plane
 
 ```
 
 
-### GUI
+#### GUI explanation via demo
 
 Run
 
@@ -130,7 +135,7 @@ The export file is a `.npz`  Numpy file with the three complex field components,
 as `Ex`, `Ey` and `Ez` with `dtype=np.complex128`.
 
 
-### Tests
+#### Tests
 
 Run
 
@@ -138,4 +143,18 @@ Run
 
 to run the test suite.
 
-At the end, you can compare the retrieved field with the one stored in the test dataset.
+At the end, you can compare the retrieved field with the one stored in the test dataset, 
+considered as the ground truth.
+
+## Troubleshooting
+
+We have detected some troubles for using wyPython on Linux distributions (also on MacOs X). It is usually fixed just by installing the next prerequisites before installing this `phase-retriever` module.
+
+Be sure that the target environ is activated before installing the prerequisites.
+
+    pip install wheel
+    sudo apt update
+    sudo apt-get install build-essential libgtk-3-dev python3-tk  # gcc g++
+    sudo apt-get install upgrade
+
+Then, you can install this `phase-retriever` in the current environ as descrived in the first section.
