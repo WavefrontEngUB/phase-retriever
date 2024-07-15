@@ -18,6 +18,10 @@ Fineup's backpropagation algorithm.
     ```
     pip install https://github.com/WavefrontEngUB/phase-retriever/archive/refs/heads/main.zip
     ```
+
+    It can take quite long for building the wxPython wheel...
+
+    If some error is trigered during the installation, please check the Troubleshooting section below.
      
 * Run it, just launching
 
@@ -150,6 +154,7 @@ Be sure that the target environ is activated before installing the prerequisites
 
     pip install wheel
     sudo apt update
-    sudo apt-get install libgtk-3-dev python3-tk
+    sudo apt-get install build-essential libgtk-3-dev python3-tk  # gcc g++
+    sudo apt-get install upgrade
 
 Then, you can install this `phase-retriever` in the current environ as descrived in the first section.
