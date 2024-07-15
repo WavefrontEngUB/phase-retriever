@@ -115,12 +115,12 @@ Then, the total irradiance should be shown in the main panel.
 You can set the specific parameters of your data on the config panel.
 The default ones are correct for the test dataset.
 
-Click on `Autoadjust` to find the appropriated bandwidth.
+Click on **`Autoadjust`** to find the appropriated bandwidth.
 Then, three more tab should be created in the main panel: Cropped irradiance, 
 Cropped Stokes and Spectrum. This last one is active now, but you can explore the rest.
 The bandwidth is overlaid in yellow on the spectrum to check that it is appropriated.
 
-Click on `Begin retrieval` to start the retrieval process.
+Click on **`Begin retrieval`** to start the retrieval process.
 Now, the `MSE` tab is created to plot the progress (it gets a bit stuck at the beginning).
 Finally, the `Results` tab is created and filled with the three complex components 
 of the field.
