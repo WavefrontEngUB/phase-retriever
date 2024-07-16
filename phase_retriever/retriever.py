@@ -6,7 +6,8 @@ import imageio
 from .algorithm import multi
 from .misc.radial import get_function_radius
 from .misc.file_selector import get_polarimetric_names, get_polarimetric_npz
-from .misc.central_region import find_rect_region
+from .misc.central_region import find_rect_region, cross_correlation, center2rect, \
+    cross_correlation2
 from .misc.stokes import get_stokes_parameters
 # from .misc.print import print
 
@@ -104,7 +105,7 @@ class SinglePhaseRetriever():
         for z in self.polarimetric_sets:
             self.images[z] = {}
             for polarization in self.polarimetric_sets[z]:
-                if type(polarization) != int:
+                if type(polarization) != int and polarization != "Irr":
                     continue
                 path = self.polarimetric_sets[z][polarization]
                 if ftype == "npy":
@@ -145,10 +146,10 @@ class SinglePhaseRetriever():
 
         y0, x0 = top
         y1, x1 = bottom
-        first = True
+        first_z = True
         for z in self.images:
             self.cropped[z] = {}
-            if first:
+            if first_z:
                 self.cropped_irradiance = 0
             for polarization in self.images[z]:
                 if type(polarization) != int:
@@ -161,22 +162,24 @@ class SinglePhaseRetriever():
 
                 cropped = image[y0:y1, x0:x1] / ref
                 self.cropped[z][polarization] = cropped
-                if first:
+                if first_z:
                     # We also compute the cropped irradiance
                     self.cropped_irradiance += cropped
-            first = False
+            first_z = False
         # And that's THA'
 
-    def get_images(self, z_idx=None, crop=True):
+    def get_images(self, z_idx=None, crop=True, irr=False):
         imgs = self.images if not crop else self.cropped
         zetes = list(imgs.keys())
         z_idx = z_idx if z_idx is not None else 0
-        return list(imgs[zetes[z_idx]].values())
+        return [v for k, v in imgs[zetes[z_idx]].items()
+                if type(k) == int or irr]
 
     def center_window(self, ref_beam_size=None):
         """Center the window of size dim X dim on the region with the most energy content."""
         # We do it based on the total irradiance.
         if not self.images:
+            raise Exception("Images not yet loaded")
             _ = self.load_dataset()
         try:
             _ = self.irradiance.shape
@@ -184,7 +187,7 @@ class SinglePhaseRetriever():
             # Irradiance not yet computed
             self._compute_irradiance()
 
-        irradiance = self.irradiance
+        irradiance = self.images[0]["Irr"] + self.irradiance
         win_size = self.get("dim")
         if ref_beam_size is not None:  # ignoring MAIN region of interest
             if not self.cropped:
@@ -208,6 +211,38 @@ class SinglePhaseRetriever():
         self._crop_images()
 
         return top, bottom
+
+    def align_polarimetric_images(self):
+        """Align the polarimetric images to the reference image."""
+        if not self.images:
+            raise Exception("Images not yet loaded")
+            _ = self.load_dataset()
+        if not self["rect"]:
+            raise ValueError("Reference region not yet specified.")
+
+        top, bottom = self["rect"]
+        center = (top[0]+bottom[0])//2, (top[1]+bottom[1])//2
+        ext_size = int(self["dim"] * 1.2)
+        ext_top, ext_bot = center2rect(center, ext_size, self.irradiance.shape[1])
+
+        for z in self.images.keys():
+            reff = self.images[z]['Irr'][ext_top[0]:ext_bot[0], ext_top[1]:ext_bot[1]]
+            for pol in self.images[z]:
+                if type(pol) != int:
+                    continue
+                image = self.images[z][pol][ext_top[0]:ext_bot[0], ext_top[1]:ext_bot[1]].copy()
+
+                # plt.imshow(np.stack([image/image.max(), reff/reff.max(), np.zeros_like(reff)], axis=2))
+                # plt.show()
+                # time.sleep(1)
+                # Compute the cross-correlation between the reference and the image
+                loc = cross_correlation2(image, reff)
+                # Compute the new top, bottom coordinates
+                centered = np.roll(image, loc, axis=(0, 1))
+                self.images[z][pol][ext_top[0]:ext_bot[0], ext_top[1]:ext_bot[1]] = centered
+
+        self._compute_irradiance()
+        self._crop_images()
 
     def select_phase_origin(self):
         """Automatically select the point of highest intensity as the phase origin of the
@@ -369,7 +404,7 @@ class SinglePhaseRetriever():
             # If the option is in the list, we change it...
             if option in self.options:
                 self.options[option] = options[option]
-                if option == "path":
+                if option == "path" and not self.images:
                     _ = self.load_dataset(options[option], ftype=self.options["ext"])
                 elif option == "rect" or option == "rectR":
                     rect = options[option]

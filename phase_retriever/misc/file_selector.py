@@ -13,7 +13,7 @@ import regex as re
 WAVELENGTH_um = 0.514  # FIXME: wavelength in microns is hardcoded !!!!
 
 def get_polarimetric_names(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
-    3:"a135", 4:"aLev", 5:"aDex"}, ftype="png"):
+    3:"a135", 4:"aLev", 5:"aDex", 6:"aIrr"}, ftype="png"):
     """Return a set of dictionaries containing the set of polarimetric images
     for each family of measurements. Assumes a filename of the form
 
@@ -95,6 +95,10 @@ def get_polarimetric_names(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
             
         elif fields[pol_idx] == pol_keys[5]:
             polarimetric_sets[z_int][5] = complete_fname
+
+        elif fields[pol_idx] == pol_keys[6]:
+            polarimetric_sets[z_int]["Irr"] = complete_fname
+
         polarimetric_sets[z_int]["scale"] = z_units
     return polarimetric_sets, beam_name
 

@@ -236,7 +236,7 @@ class wxGUI(wx.Frame):
         self._load_data()
 
     def OnCenter(self, event):
-        # We center the window with the size given by the entries.
+        # We find the beam-windows with the size given by the entries.
         configs = self.entries.GetValues()
         window_size = configs["window_size"]
         window_sizeR = configs["window_sizeR"]
@@ -247,6 +247,10 @@ class wxGUI(wx.Frame):
         if topR is None:
             topR = [0, 0]
         rect_centerR = topR[0] + window_sizeR // 2, topR[1] + window_sizeR // 2
+
+        # Align the polarimetric images
+        self.retriever.align_polarimetric_images()
+
         # Adjust the phase origin
         self.retriever.select_phase_origin()
         phase_origin = self.retriever.options["origin"]
@@ -256,6 +260,7 @@ class wxGUI(wx.Frame):
 
         # Replot everything
         self._reconfig()
+        self._show_dataset()
 
         self.entries.GetButton("swap").Enable()
 
