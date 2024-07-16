@@ -1,70 +1,94 @@
 import wx
 import wx.propgrid
 
-DEFAULT_WAVELENGTH = 0.52
-DEFAULT_PIXELSIZE = 0.043
-DEFAULT_NITERATIONS = 120
-DEFAULT_WINDOWSIZE = 256
-DEFAULT_WINDOWSIZE_R = 64
-DEFAULT_BANDWIDTH = 0
-DEFAULT_ROISIZE = 64
+DEFAULT_WAVELENGTH = 0.52  # um
+DEFAULT_PIXELSIZE = 0.043  # um
+DEFAULT_NITERATIONS = 120  # iterations
+DEFAULT_WINDOWSIZE = 256   # px
+DEFAULT_WINDOWSIZE_R = 64  # px
+DEFAULT_BANDWIDTH = 0      # px
+DEFAULT_ROISIZE = 64       # px
 
 choices = { "ext": ["png", "npy"],
             "mode": ["vectorial", "scalar"]
           }
 
-class TextedEntry(wx.Panel):
-    def __init__(self, parent, text):
-        super().__init__(parent)
+# class TextedEntry(wx.Panel):
+#     def __init__(self, parent, text):
+#         super().__init__(parent)
+#
+#         self.init(text)
+#
+#     def init(self, text):
+#         sizer = wx.BoxSizer(wx.HORIZONTAL)
+#
+#         label = wx.StaticText(self, label=text)
+#
+#         self.entry = entry = wx.TextCtrl(self)
+#
+#         sizer.Add(entry, 0, wx.LEFT | wx.EXPAND)
+#         sizer.Add(label, 0, wx.LEFT | wx.EXPAND)
+#
+#         self.SetSizer(sizer)
+#
+#     def ChangeValue(self, value):
+#         self.entry.SetValue(value)
 
-        self.init(text)
-
-    def init(self, text):
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-
-        label = wx.StaticText(self, label=text)
-
-        self.entry = entry = wx.TextCtrl(self)
-
-        sizer.Add(entry, 0, wx.LEFT | wx.EXPAND)
-        sizer.Add(label, 0, wx.LEFT | wx.EXPAND)
-
-        self.SetSizer(sizer)
-
-    def ChangeValue(self, value):
-        self.entry.SetValue(value)
-
-class DirectorySelector(wx.Panel):
-    def __init__(self, parent, text):
+class ButtonsPane(wx.Panel):
+    def __init__(self, parent):
         super().__init__(parent)
 
         self.dirname = None
 
-        self.init(text)
+        self.init()
 
-    def init(self, text):
-        # TODO: Remove references to old path indicator box
+    def init(self):
+
+        button_size = (250, 30)
+
+        factor = 0.4
+        button_size_small = (int(button_size[0]*factor), button_size[1])
+        button_size_large = (int(button_size[0]*(1-factor)), button_size[1])
+
+        self.button = button = wx.Button(self, label="Search directory",
+                                         size=button_size)
+        self.cent_butt = centbut = wx.Button(self, label="Center beam",
+                                             size=button_size_large)
+        self.swap_butt = swapbut = wx.Button(self, label="Swap beams",
+                                             size=button_size_small)
+        self.auto_butt = autobut = wx.Button(self, label="Check bandwidth",
+                                             size=button_size)
+        self.ret_butt = ret_butt = wx.Button(self, label="Begin retrieval",
+                                             size=button_size)
+        self.export_butt = export_butt = wx.Button(self, label="Export results",
+                                                   size=button_size)
+
+        sizerC = wx.BoxSizer(wx.HORIZONTAL)
+        sizerC.Add(centbut, 0, wx.CENTRE)
+        sizerC.Add(swapbut, 0, wx.CENTRE)
+
         sizer = wx.BoxSizer(wx.VERTICAL)
-        #hsizer = wx.BoxSizer(wx.HORIZONTAL)
-
-        self.button = button = wx.Button(self, label="Search directory")
-        self.cent_butt = centbut = wx.Button(self, label="Center beam")
-        self.auto_butt = autobut = wx.Button(self, label="Check bandwidth")
-        self.ret_butt = ret_butt = wx.Button(self, label="Begin retrieval")
-        self.export_butt = export_butt = wx.Button(self, label="Export results")
-
-        #self.info = info = TextedEntry(self, text)
-
-        #hsizer.Add(info, 1, wx.CENTRE | wx.EXPAND)
-
-        #sizer.Add(hsizer,  0, wx.CENTRE | wx.EXPAND)
-        sizer.Add(button,   0, wx.CENTRE)
-        sizer.Add(centbut,  0, wx.CENTRE)
-        sizer.Add(autobut,  0, wx.CENTRE)
+        sizer.Add(button, 0, wx.CENTRE)
+        sizer.Add(sizerC, 0, wx.CENTRE)
+        # sizer.Add(centbut, 0, wx.CENTRE)
+        sizer.Add(autobut, 0, wx.CENTRE)
         sizer.Add(ret_butt, 0, wx.CENTRE)
         sizer.Add(export_butt, 0, wx.CENTRE)
 
+        # sizer2 = wx.BoxSizer(wx.VERTICAL)
+        # sizer2.AddSpacer(button_size[1])
+        # sizer2.Add(swapbut, 0, wx.CENTRE)
+        # sizer2.AddSpacer(button_size[1])
+        # sizer2.AddSpacer(button_size[1])
+        # sizer2.AddSpacer(button_size[1])
+
+        # hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        # hsizer.AddSpacer(button_size_small[0]//2)
+        # hsizer.Add(sizer, 0)
+        # hsizer.Add(sizer2, 0)
+
         self.SetSizer(sizer)
+
 
 class wxEntryPanel(wx.Panel):
     def __init__(self, *args, **kwargs):
@@ -75,9 +99,6 @@ class wxEntryPanel(wx.Panel):
     def init(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # Name and directory of the polarimetric images
-        self.polEntry = polEntry = DirectorySelector(self, "Working directory")
-
         # To hold all the data entries, we creat a grid (wokrsheet-like)
         self.pgrid = pgrid = wx.propgrid.PropertyGrid(self, name="EntryPanel")
 
@@ -86,6 +107,17 @@ class wxEntryPanel(wx.Panel):
                                                 name="path", value=""))
         pgrid.Append(wx.propgrid.EnumProperty("Input files extension", name="ext",
                                               choices=wx.propgrid.PGChoices(choices["ext"])))
+        pgrid.Append(wx.propgrid.PropertyCategory("Beam location"))
+        pgrid.Append(wx.propgrid.IntProperty("Window size", name="window_size",
+                                             value=DEFAULT_WINDOWSIZE))
+        pgrid.Append(wx.propgrid.ArrayStringProperty("Window center",
+                                                     name="window_center",
+                                                     value=["0", "0"]))
+        pgrid.Append(wx.propgrid.ArrayStringProperty("Ref. center",
+                                                     name="window_centerR",
+                                                     value=["0", "0"]))
+        pgrid.Append(wx.propgrid.IntProperty("Ref. size", name="window_sizeR",
+                                             value=DEFAULT_WINDOWSIZE_R))
         pgrid.Append(wx.propgrid.PropertyCategory("Measurement properties"))
         pgrid.Append(wx.propgrid.FloatProperty("Wavelength (um)", name="lambda",
                                                value=DEFAULT_WAVELENGTH))
@@ -96,19 +128,9 @@ class wxEntryPanel(wx.Panel):
         pgrid.Append(wx.propgrid.PropertyCategory("Retrieving configuration"))
         pgrid.Append(wx.propgrid.IntProperty("Number of iterations", name="n_iter",
                                              value=DEFAULT_NITERATIONS))
-        pgrid.Append(wx.propgrid.IntProperty("Window size", name="window_size",
-                                             value=DEFAULT_WINDOWSIZE))
-        pgrid.Append(wx.propgrid.ArrayStringProperty("Window center",
-                                                     name="window_center",
-                                                     value=["0", "0"]))
         pgrid.Append(wx.propgrid.ArrayStringProperty("Phase origin",
                                                      name="phase_origin",
                                                      value=["0", "0"]))
-        pgrid.Append(wx.propgrid.ArrayStringProperty("Reference center",
-                                                     name="window_centerR",
-                                                     value=["0", "0"]))
-        pgrid.Append(wx.propgrid.IntProperty("Reference size", name="window_sizeR",
-                                             value=DEFAULT_WINDOWSIZE_R))
         pgrid.Append(wx.propgrid.FloatProperty("Bandwidth (pixels)",
                                                name="bandwidth",
                                                value=DEFAULT_BANDWIDTH))
@@ -117,6 +139,8 @@ class wxEntryPanel(wx.Panel):
                                              value=DEFAULT_ROISIZE))
         # pgrid.Append(wx.propgrid.IntProperty("Z position", name="z_exp",
         #                                      value=0))
+
+        self.polEntry = polEntry = ButtonsPane(self)
 
         sizer.Add(pgrid, 2, wx.EXPAND | wx.RIGHT)
         sizer.Add(polEntry, 1, wx.EXPAND | wx.RIGHT)
@@ -145,6 +169,8 @@ class wxEntryPanel(wx.Panel):
             button = self.polEntry.button
         elif name == "center":
             button = self.polEntry.cent_butt
+        elif name == "swap":
+            button = self.polEntry.swap_butt
         elif name == "autoadjust":
             button = self.polEntry.auto_butt
         elif name == "begin":

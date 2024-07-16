@@ -65,16 +65,7 @@ class GUIRetriever(PhaseRetriever):
 
 class wxGUI(wx.Frame):
     def __init__(self, parent, title, search_dir=''):
-        super().__init__(parent, title=title, size=(800, 600))
-
-        # Initializing a dict containing the names of the plots that we will have on our
-        # GUI with their pointers
-        self.plots = {
-                "irradiance": None,
-                "mse"       : None,
-                "phi"       : None,
-                "bandwidth" : None,
-                }
+        super().__init__(parent, title=title, size=(1024, 768))
 
         self.init()
         self.Centre()
@@ -101,22 +92,20 @@ class wxGUI(wx.Frame):
         self.entries.GetPgrid().Bind(EVT_PG_CHANGED, self.OnSpecChange)
         self.entries.GetButton("search").Bind(wx.EVT_BUTTON, self.OnLoadClick)
         self.entries.GetButton("center").Bind(wx.EVT_BUTTON, self.OnCenter)
+        self.entries.GetButton("swap").Bind(wx.EVT_BUTTON, self.OnSwap)
         self.entries.GetButton("autoadjust").Bind(wx.EVT_BUTTON, self.OnAutoadjust)
         self.entries.GetButton("begin").Bind(wx.EVT_BUTTON, self.OnRetrieve)
         self.entries.GetButton("export").Bind(wx.EVT_BUTTON, self.OnExport)
 
         # Disable some buttons
         self.entries.GetButton("center").Disable()
+        self.entries.GetButton("swap").Disable()
         self.entries.GetButton("autoadjust").Disable()
         self.entries.GetButton("begin").Disable()
         self.entries.GetButton("export").Disable()
 
-        # Explorer tab
-        # self.explorer = explorer = DataExplorer(notebook)
-        # explorer.GetSpin().Bind(EVT_FLOATSPIN, self.OnExplore)
-
         # FIXME: Notebook
-        notebook.AddPage(entries, "Config")
+        notebook.AddPage(entries, "Configuration")
         # notebook.AddPage(explorer, "Exploration")
 
         # Adding it, from left to right, to the sizer
@@ -268,7 +257,18 @@ class wxGUI(wx.Frame):
         # Replot everything
         self._reconfig()
 
+        self.entries.GetButton("swap").Enable()
+
         self.plotter.select_page("Cropped Stokes")
+
+    def OnSwap(self, event):
+        values = self.entries.GetValues()
+
+        topR, bottomR = values["window_center"]
+        top, bottom = values["window_centerR"]
+
+        self.entries.SetValue(window_center=(top, bottom), window_centerR=(topR, bottomR))
+        self._reconfig()
 
     def OnAutoadjust(self, event):
         self.retriever.compute_bandwidth()
@@ -286,18 +286,9 @@ class wxGUI(wx.Frame):
         self.entries.GetButton("begin").Enable()
         self.entries.GetButton("search").Disable()
 
-
-    # def OnStartProcessing(self, event):
-    #     # Check if pixel_size is properly set, needed to do any assignment
-    #     p_size = self.retriever.options["pixel_size"]
-    #     if ((not p_size) or (p_size <= 0)):
-    #         error_dialog = wx.MessageDialog(self,
-    #                         "Pixel size must be selected before proceeding!",
-    #                         style=wx.ICON_ERROR | wx.OK)
-    #         error_dialog.ShowModal()
-
     def OnRetrieve(self, event):
         self.entries.GetButton("center").Disable()
+        self.entries.GetButton("swap").Disable()
         self.entries.GetButton("autoadjust").Disable()
         # Prepare the plotting page if it didn't exist
         try:

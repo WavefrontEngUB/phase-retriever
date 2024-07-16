@@ -19,6 +19,7 @@ def wxMain(data_dir=""):
     gui.Show()
     app.MainLoop()
 
+
 def TkMain():
     root = tk.Tk()
     style = ttk.Style()
@@ -29,6 +30,7 @@ def TkMain():
     root["background"] = bg
     gui = PhaseRetrieverGUI(root, bg)
     root.mainloop()
+
 
 def print_help(error_code=0, epilog=''):
 
