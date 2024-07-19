@@ -21,4 +21,6 @@ phase_retriever.egg-info/
 *.egg
 
  # test files
-!testRad*
+!phase_retriever/test_dataset/*
+phase_retriever/test_dataset_old/*
+

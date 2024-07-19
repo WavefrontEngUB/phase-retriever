@@ -49,8 +49,9 @@ def print_help(error_code=0, epilog=''):
           f"will search data in the current directory.")
     print(f"  download_data:  Downloads the test dataset on the current directory "
           f"or in the specified in the optional <path>.")
-    print(f"  demo:           Launches the program with a test dataset already loaded."
-          f" *It can be combined with download_data.*")
+    print(f"  demo=N:         Launches the program with a test dataset already loaded.\n"
+          f"                  N: 1 or 'empty' -> Simulated data ; 2 -> Experimental data.\n"
+          f"                  *It can be combined with download_data.*")
     print(f"  test:           Run the test suite.")
     print(f"")
     print(f"  -h, --help:     Show this help message.")
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     DOWNLOAD_FLAG = False
 
     module_dir = os.path.dirname(__file__)
-    test_data = os.path.join(module_dir, 'test_dataset', 'simulated')
+    test_data_dir = os.path.join(module_dir, 'test_dataset')
 
     data_dir = os.getcwd()
 
@@ -79,9 +80,15 @@ if __name__ == "__main__":
         elif arg == "test":
             err = test_basics()
             sys.exit(err)
-        elif arg == "demo":
+        elif arg.startswith("demo"):
             DEMO_FLAG = True
-            data_dir = test_data
+            demo_num = arg.split("=")[1] if '=' in arg else 1
+            try:
+                demo_num = int(demo_num)
+            except:
+                print_help(-1, "Demo number must be an integer.")
+            data_dir = os.path.join(test_data_dir, "experimental" if demo_num == 2
+                                                   else "simulated")
         elif arg.startswith("download_data"):
             DOWNLOAD_FLAG = True
             download_path = arg.split("=")[1] if '=' in arg else '.'
@@ -94,7 +101,7 @@ if __name__ == "__main__":
         from distutils.dir_util import copy_tree
         if os.path.isdir(download_path):  # If exists, make a subdirectory
             download_path = os.path.join(download_path, 'phase_retriever_dataset')
-        copy_tree(test_data, download_path)
+        copy_tree(test_data_dir, download_path)
         if DEMO_FLAG:
             data_dir = download_path
         else:

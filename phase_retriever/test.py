@@ -16,10 +16,12 @@ def test_basics():
     pixel_size = 0.043
     lamb = 0.52
 
+    print("Testing basic functionality of the phase retriever. (GUI is not tested)")
+
     # Load dataset
     print("Dataset load... ", end="")
     module_dir = os.path.dirname(__file__)
-    test_data = os.path.join(module_dir, 'test_dataset')
+    test_data = os.path.join(module_dir, 'test_dataset', "simulated")
     try:
         beam_name = retriever.load_dataset(test_data)
         print(OK)
@@ -56,6 +58,14 @@ def test_basics():
         print(FAIL)
         n_errors += 1
 
+    print("Image alignment... ", end="")
+    try:
+        retriever.align_polarimetric_images()
+        print(OK)
+    except:
+        print(FAIL)
+        n_errors += 1
+
     print("Phase origin selection... ", end="")
     try:
         retriever.select_phase_origin()
@@ -72,10 +82,10 @@ def test_basics():
         print(FAIL)
         n_errors += 1
 
-    print("  All loaded options:  ")
-    for option in retriever.options:
-        print(option, retriever.options[option])
+    print("\nAll loaded options: ", end='')
+    print({**retriever.options}, "\n")
 
+    print("Retrieving...  (this may take a while)")
     Ax, Ay = retriever.retrieve()
     print("Number of iterations done:", len(retriever.mse[0]))
 
@@ -95,7 +105,9 @@ def test_basics():
     fig0, ax0 = plt.subplots(1, 2, constrained_layout=True)
     msx, msy = retriever.mse
     ax0[0].plot(msx)
+    ax0[0].set_title("MSE evolution (X-component)")
     ax0[1].plot(msy)
+    ax0[1].set_title("MSE evolution (Y-component)")
 
     cmap = "twilight_shifted"
     fig, ax = plt.subplots(3, 4, constrained_layout=True)
@@ -116,8 +128,8 @@ def test_basics():
     ax[2, 2].imshow(np.angle(Ez), cmap=cmap, interpolation="nearest")
     ax[2, 3].imshow(np.angle(Ez_gt), cmap=cmap, interpolation="nearest")
 
-    print(f"Errors found: {n_errors}")
-    print("Compare results... ")
+    print(f"\nErrors found: {n_errors}")
+    print("Check the MSE evolution and compare results in the figure...")
 
     plt.show()
 
