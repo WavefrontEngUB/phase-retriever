@@ -36,16 +36,16 @@ def print_help(error_code=0, epilog=''):
 
     program_cmd = f"python -m {sys.modules[__name__].__package__}"
 
-    print(f"Description: {PROGRAM_NAME} is a GUI powered software to retrieve the fase of a "
-          f"highly focused electromagnetic field,\nby taking as input two recording "
-          f"planes separated some distance nearby the focus.\n"
-          f"It also reconstruct the longitudinal component.\nTo do so, it is necessary "
-          f"to provide polarimetric images of both z-planes.")
+    print(f"Description: {PROGRAM_NAME} is a GUI powered software to retrieve the phase of a "
+          f"highly focused electromagnetic field.\nThe program requires the six "
+          f"polarimetric images recorded at two planes perpendical to the optical "
+          f"axis\nand separated some distance nearby the focus.\n"
+          f"It also calculates the electric field longitudinal component.")
     print(f"")
-    print(f"usage: {program_cmd} [test|demo|download_data=<path>|path=<path>] [-h|-help]")
+    print(f"usage: {program_cmd} [path=<path>|download_data=<path>|demo|test] [-h|--help]")
     print(f"")
     print(f"Options:")
-    print(f"  path=<path>:    Set the path to the dataset. If not set, the program will "
+    print(f"  path:           Set the path to the dataset. If not set, the program will "
           f"will search data in the current directory.")
     print(f"  download_data:  Downloads the test dataset on the current directory "
           f"or in the specified in the optional <path>.")
@@ -53,7 +53,7 @@ def print_help(error_code=0, epilog=''):
           f" *It can be combined with download_data.*")
     print(f"  test:           Run the test suite.")
     print(f"")
-    print(f"  -h, -help:      Show this help message.")
+    print(f"  -h, --help:     Show this help message.")
     print(f"")
     print(epilog)
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     verbose = False
     for arg in sys.argv[1:]:
-        if arg in ["-h", "-help"]:
+        if arg in ["-h", "--help"]:
             print_help(0)
         elif arg == "-v":
             verbose = True
