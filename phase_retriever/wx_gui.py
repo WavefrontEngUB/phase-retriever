@@ -490,7 +490,7 @@ class wxGUI(wx.Frame):
             self._plot_bandwidth()
             self.plotter.set_circle("Spectrum", (width//2, width//2), bw, color="red")
 
-    def _ensures_reload(self, hard):
+    def _ensures_reload(self, hard=True):
         sayYes = True
         if self.beam_name and any([self.hasStokes, self.hasSpectrum, self.finished]):
             msg = ("New data will be loaded, then all previous configuration and "
