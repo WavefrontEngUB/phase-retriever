@@ -1,5 +1,6 @@
 import os.path
 import sys
+from glob import glob
 
 import wx
 from wx.lib.agw.floatspin import EVT_FLOATSPIN
@@ -73,13 +74,29 @@ class wxGUI(wx.Frame):
 
         sys.excepthook = MyExceptionHook
 
+        self.init_data()
+
         self.propagator = FocalPropagator()
 
         self.dirname = search_dir
         if search_dir:
-            self._load_data()
+            self._load_data(silent=True)
 
-        self.Maximize(True) if sys.platform == "Linux" else None
+        # self.Maximize(True) if sys.platform == "Linux" else None
+
+    def init_data(self, hard=True):
+        self.hasStokes = False if hard else self.hasStokes
+        self.hasSpectrum = False if hard else self.hasSpectrum
+        self.finished = False
+        self.beam_name = None if hard else self.beam_name
+        self.retriever = GUIRetriever()
+
+        # Disable some buttons
+        self.entries.GetButton("center").Disable()
+        self.entries.GetButton("swap").Disable()
+        self.entries.GetButton("autoadjust").Disable()
+        self.entries.GetButton("begin").Disable()
+        self.entries.GetButton("export").Disable()
 
     def init(self):
         # Initializing the plotter
@@ -99,13 +116,6 @@ class wxGUI(wx.Frame):
         self.entries.GetButton("autoadjust").Bind(wx.EVT_BUTTON, self.OnAutoadjust)
         self.entries.GetButton("begin").Bind(wx.EVT_BUTTON, self.OnRetrieve)
         self.entries.GetButton("export").Bind(wx.EVT_BUTTON, self.OnExport)
-
-        # Disable some buttons
-        self.entries.GetButton("center").Disable()
-        self.entries.GetButton("swap").Disable()
-        self.entries.GetButton("autoadjust").Disable()
-        self.entries.GetButton("begin").Disable()
-        self.entries.GetButton("export").Disable()
 
         # FIXME: Notebook
         notebook.AddPage(entries, "Configuration")
@@ -141,89 +151,122 @@ class wxGUI(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnExport, fileExport)
         self.Bind(wx.EVT_MENU, self.OnQuit, fileQuit)
 
-        # TODO: Initialize the phase retriever
-        self.retriever = GUIRetriever()
-
+        self.updated_old_entries()
 
     # --- MAIN-PANEL OnEvent methods ---
     def OnSpecChange(self, event):
         """Change properties of the retriever as they are modified in the pgrid entry
         panel."""
+
+        key = event.GetPropertyName()
+        new_value = event.GetValue()
         values = self.entries.GetValues()
-        # FIXME: Change wxentries so that its keys are the same as those of the retriever
-        for key in values:
-            curr_value = values[key]
-            if key in ("lamb", "n_iter"):  # The basics ones
-                self.retriever[key] = curr_value
 
-            elif key == "bandwidth":
-                if curr_value > 0:
-                    self.retriever[key] = bw = curr_value
-                    width = values["window_size"]
-                    self.plotter.set_circle("Spectrum", (width//2, width//2), 2*bw,
-                                            color="red")
-            elif key == "window_size":
-                width = curr_value
-                if width != self.retriever["dim"]:
-                    self.retriever["dim"] = width
-                    rect_center = values["window_center"]
-                    top = [int(i) - width // 2 for i in rect_center]
-                    self.plotter.set_rectangle("RAW Irradiance", top, width, width)
+        basic_keys = ("lamb", "n_iter")  # Those that must be updated in the retriever and done.
+        post_keys = ("roi", "z_exp")  # Those that can be modified also when retrieve is finished.
 
-            elif key == "window_center":
-                rect_center = curr_value
-                if rect_center != self.retriever["rect"]:
-                    width = values["window_size"]
-                    top = [int(i) - width // 2 for i in rect_center]
-                    bottom = [int(i) + width // 2 for i in rect_center]
-                    self.retriever["rect"] = [top, bottom]
-                    # The retriever will tell us if the rect coordinates are the correct ones
-                    top, bottom = self.retriever["rect"]
-                    width = self.retriever["dim"]
-                    center = [str(int(i) + width // 2) for i in top]
-                    # Set the correct values in the entry widget
-                    self.entries.SetValue(window_center=center)
-                    # Finally, set the rectangle visible on screen
-                    self.plotter.set_rectangle("RAW Irradiance", top, width, width)
-                    self._plot_stokes()
+        if (self.finished and key not in post_keys + ("path", )  # Path is checked separatelly
+                and not self._ensures_reload(hard=False)):
+            self.entries.SetValue(**{key: self.old_entries[key]})
+            return
 
-            elif key == "window_sizeR":
-                widthR = curr_value
-                dimRR = self.retriever["rectR"][1][0] - self.retriever["rectR"][0][0]
-                if widthR != dimRR:
-                    rect_centerR = values["window_centerR"]
-                    topR = [int(i) - widthR // 2 for i in rect_centerR]
-                    bottomR = [int(i) + widthR // 2 for i in rect_centerR]
-                    self.retriever["rectR"] = [topR, bottomR]
-                    self.plotter.set_rectangle("RAW Irradiance", topR, widthR, widthR,
-                                               color="red")
-                    self._plot_stokes()
+        if key in basic_keys:
+            self.retriever[key] = new_value
 
-            elif key == "window_centerR":
-                rect_centerR = curr_value
-                if rect_centerR != self.retriever["rectR"]:
+        elif key == "path":
+            if self.dirname != new_value and self._ensures_reload(hard=True):
+                self.dirname = new_value
+                self._load_data()
+            else:
+                self.entries.SetValue(path=self.dirname)
 
-                    topR = [int(i) - widthR // 2 for i in rect_centerR]
-                    bottomR = [int(i) + widthR // 2 for i in rect_centerR]
-                    self.retriever["rectR"] = [topR, bottomR]
-                    # The retriever will tell us if the rect coordinates are the correct ones
-                    topR, bottomR = self.retriever["rectR"]
-                    widthR = self.retriever["rectR"][1][0] - self.retriever["rectR"][0][0]
-                    centerR = [str(int(i) + widthR // 2) for i in topR]
-                    # Set the correct values in the entry widget
-                    self.entries.SetValue(window_centerR=centerR)
-                    # Finally, set the rectangle visible on screen
-                    self.plotter.set_rectangle("RAW Irradiance", topR, widthR, widthR,
-                                               color="red")
-                    self._plot_stokes()
+        elif key == "bandwidth":
+            if new_value > 0:
+                self.retriever[key] = bw = new_value
+                self.retriever._compute_spectrum()
+                self.hasSpectrum = True
+                width = values["window_size"]
+                self._plot_bandwidth()
+                self.plotter.set_circle("Spectrum", (width//2, width//2), 2*bw,
+                                        color="red")
+                # self.entries.GetButton("search").Disable()
+                self.entries.GetButton("begin").Enable()
 
-            elif key == 'roi' or key == 'z_exp':
-                self.roi = values['roi']
-                # self._plot_irradiance()
+        elif key == "window_size":
+            width = new_value
+            if width != self.retriever["dim"]:
+                self.retriever["dim"] = width
+                rect_center = values["window_center"]
+                top = [int(i) - width // 2 for i in rect_center]
+                self.plotter.set_rectangle("RAW Irradiance", top, width, width)
+
+        elif key == "window_center":
+            rect_center = new_value
+            if rect_center != self.retriever["rect"]:
+                width = values["window_size"]
+                top = [int(i) - width // 2 for i in rect_center]
+                bottom = [int(i) + width // 2 for i in rect_center]
+                self.retriever["rect"] = [top, bottom]
+                # The retriever will tell us if the rect coordinates are the correct ones
+                top, bottom = self.retriever["rect"]
+                width = self.retriever["dim"]
+                center = [str(int(i) + width // 2) for i in top]
+                # Set the correct values in the entry widget
+                self.entries.SetValue(window_center=center)
+                # Finally, set the rectangle visible on screen
+                self.plotter.set_rectangle("RAW Irradiance", top, width, width)
                 self._plot_stokes()
-                self.update_results(*self.propagator.propagate_field_to(0))  # values['z_exp']
+
+        elif key == "window_sizeR":
+            widthR = new_value
+            if self.retriever["rectR"] is None:
+                return
+            dimRR = self.retriever["rectR"][1][0] - self.retriever["rectR"][0][0]
+            if widthR != dimRR:
+                rect_centerR = values["window_centerR"]
+                topR = [int(i) - widthR // 2 for i in rect_centerR]
+                bottomR = [int(i) + widthR // 2 for i in rect_centerR]
+                self.retriever["rectR"] = [topR, bottomR]
+                self.plotter.set_rectangle("RAW Irradiance", topR, widthR, widthR,
+                                           color="red")
+                self._plot_stokes()
+
+            if widthR == 0:
+                self.entries.GetButton("swap").Disable()
+            else:
+                self.entries.GetButton("swap").Enable()
+
+        elif key == "window_centerR":
+            rect_centerR = new_value
+            widthR = values["window_sizeR"]
+            if rect_centerR != self.retriever["rectR"]:
+
+                topR = [int(i) - widthR // 2 for i in rect_centerR]
+                bottomR = [int(i) + widthR // 2 for i in rect_centerR]
+                self.retriever["rectR"] = [topR, bottomR]
+                # The retriever will tell us if the rect coordinates are the correct ones
+                topR, bottomR = self.retriever["rectR"]
+                widthR = self.retriever["rectR"][1][0] - self.retriever["rectR"][0][0]
+                centerR = [str(int(i) + widthR // 2) for i in topR]
+                # Set the correct values in the entry widget
+                self.entries.SetValue(window_centerR=centerR)
+                # Finally, set the rectangle visible on screen
+                self.plotter.set_rectangle("RAW Irradiance", topR, widthR, widthR,
+                                           color="red")
+                self._plot_stokes()
+
+        elif key == 'roi' or key == 'z_exp':
+            self.roi = values['roi']
+            # self._plot_irradiance()
+            self._plot_stokes()
+            self.update_results()  # values['z_exp']
+
+        self.updated_old_entries()
 
     def OnLoadClick(self, event):
+        if not self._ensures_reload():
+            return
+
         dialog = wx.DirDialog(self,
                               "Choose input directory  (files might not be shown)",
                               os.getcwd(), wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
@@ -239,35 +282,24 @@ class wxGUI(wx.Frame):
         self._load_data()
 
     def OnCenter(self, event):
-        # We find the beam-windows with the size given by the entries.
-        configs = self.entries.GetValues()
-        window_size = configs["window_size"]
-        window_sizeR = configs["window_sizeR"]
-        self.retriever.config(dim=window_size)
-        top, bottom = self.retriever.center_window()
-        rect_center = top[0]+window_size//2, top[1]+window_size//2
-        topR, bottomR = self.retriever.center_window(ref_beam_size=window_sizeR)
-        if topR is None:
-            topR = [0, 0]
-        rect_centerR = topR[0] + window_sizeR // 2, topR[1] + window_sizeR // 2
-
         # Align the polarimetric images
-        self.retriever.align_polarimetric_images()
+        if self.retriever.images[0].get("Irr", None) is not None:
+            self.retriever.align_polarimetric_images()
 
         # Adjust the phase origin
         self.retriever.select_phase_origin()
         phase_origin = self.retriever.options["origin"]
-        self.entries.SetValue(window_center=[str(x) for x in rect_center],
-                              window_centerR=[str(x) for x in rect_centerR],
-                              phase_origin=[str(x) for x in phase_origin])
+        self.entries.SetValue(phase_origin=[str(x) for x in phase_origin])
+        self.updated_old_entries()
 
         # Replot everything
+        self.hasStokes = True
         self._reconfig()
         self._show_dataset()
 
         self.entries.GetButton("swap").Enable()
 
-        self.plotter.select_page("Cropped Stokes")
+        # self.plotter.select_page("Cropped Stokes")
 
     def OnSwap(self, event):
         values = self.entries.GetValues()
@@ -276,6 +308,10 @@ class wxGUI(wx.Frame):
         top, bottom = values["window_centerR"]
 
         self.entries.SetValue(window_center=(top, bottom), window_centerR=(topR, bottomR))
+        self.updated_old_entries()
+
+        if self.retriever.images[0].get("Irr", None) is not None:
+            self.retriever.align_polarimetric_images()
         self._reconfig()
 
     def OnAutoadjust(self, event):
@@ -284,15 +320,18 @@ class wxGUI(wx.Frame):
 
         # Set the autoadjusted values to the entry panel
         self.entries.SetValue(bandwidth=bw)
+        self.updated_old_entries()
 
         # Replot everything
+        self.hasStokes = True
+        self.hasSpectrum = True
         self._reconfig()
 
         self.plotter.select_page("Spectrum")
 
         # Enable the begin button and disable the Search button
         self.entries.GetButton("begin").Enable()
-        self.entries.GetButton("search").Disable()
+        # self.entries.GetButton("search").Disable()
 
     def OnRetrieve(self, event):
         self.entries.GetButton("center").Disable()
@@ -332,12 +371,10 @@ class wxGUI(wx.Frame):
 
     def OnFinished(self):
         """Plot results once the phase retriever is finished"""
+        self.finished = True
         Ex, Ey = self.retriever.get_trans_fields()
-        Ez = np.zeros_like(Ex)
-        self.update_results(Ex, Ey, Ez)
-
-        self.plotter.set_colorbar("Results", share=(3, 5, 1))
-        self.plotter.select_page("Results")
+        # Ez = np.zeros_like(Ex)
+        # self.update_results(Ex, Ey, Ez)
 
         # TODO: Prepare the propagator to explore the phase retrieval results...
         configs = self.entries.GetValues()
@@ -347,7 +384,9 @@ class wxGUI(wx.Frame):
         self.propagator["pixel_size"] = pixel_size
         self.propagator.create_spectra()
         self.propagator.create_gamma()
-        self.update_results(*self.propagator.propagate_field_to(0))
+        self.update_results(z=0)
+        self.plotter.set_colorbar("Results", share=(3, 5, 1))
+        self.plotter.select_page("Results")
         self.entries.GetButton("begin").Disable()
         self.entries.GetButton("export").Enable()
 
@@ -363,7 +402,7 @@ class wxGUI(wx.Frame):
             return
         # Get the selected z propagation value (wavelength units)
         z = self.explorer.GetZ()
-        self.update_results(*self.propagator.propagate_field_to(z))
+        self.update_results(z=z)
 
     # --- FILE-MENU OnEvent methods ---
     def OnDump(self, event):
@@ -389,19 +428,13 @@ class wxGUI(wx.Frame):
             if dialog.ShowModal() == wx.ID_CANCEL:
                 return
             path = dialog.GetPath()
-            try:
-                with open(path, "r") as f:
-                    configs = json.load(f)
-            except IOError:
-                wx.LogError(f"Can't load configuration from file {path}")
-        self.entries.SetValue(**configs)
-        self.dirname = configs["path"]
+
+        self._load_config(json_path=path, change_path=True)
         self._load_data()
         self._reconfig()
 
     def OnExport(self, event):
         try:
-
             Ex, Ey, Ez = self.propagator.propagate_field_to(0)
             data = {"Ex":Ex, "Ey":Ey, "Ez": Ez}
             basename = self.beam_name + "_retrieved.npz"
@@ -452,41 +485,105 @@ class wxGUI(wx.Frame):
         self.plotter.set_rectangle("RAW Irradiance", topR, widthR, widthR, color="red")
 
         # Draw the bandwidth if so
-        if bw:
+        if self.hasSpectrum:
             self.retriever._compute_spectrum()
             self._plot_bandwidth()
             self.plotter.set_circle("Spectrum", (width//2, width//2), bw, color="red")
 
-    def _load_data(self):
+    def _ensures_reload(self, hard):
+        sayYes = True
+        if self.beam_name and any([self.hasStokes, self.hasSpectrum, self.finished]):
+            msg = ("New data will be loaded, then all previous configuration and "
+                   "retrieval will be lost." if hard else "If config. parameters "
+                   "change, the current retrieval will be lost.")
+            msg += "\n\nConsider to Export results, before. Continue?"
+            with wx.MessageDialog(self, caption="Warning!", message=msg,
+                                  style=wx.YES_NO | wx.ICON_EXCLAMATION) as dialog:
+                sayYes = dialog.ShowModal() == wx.ID_YES
+
+            if sayYes:
+                # from scratch
+                self.plotter.clean()
+                del self.retriever
+                self.init_data(hard)
+                self._load_data(load_json=False) if not hard else None
+                self._reconfig() if not hard else None
+
+        return sayYes
+
+    def _load_config(self, json_path, change_path):
+        with open(json_path, "r") as f:
+            loaded_configs = json.load(f)
+        if change_path:
+            self.dirname = loaded_configs["path"]
+        else:
+            _ = loaded_configs.pop("path", None)
+        self.entries.SetValue(**loaded_configs)
+        self.updated_old_entries()
+
+    def _load_data(self, silent=False, load_json=True):
         # We now update the entry to contain the selected path
         self.entries.SetValue(path=self.dirname)
+        self.updated_old_entries()
+
+        # Trying to load a configuration
+        json_candidates = glob(os.path.join(self.dirname, "*.json"))
+        if load_json and json_candidates:
+            (print(f"More than one config.json found. Taking the first...")
+             if len(json_candidates) > 1 else None)
+            self._load_config(json_candidates[0], change_path=False)
 
         # Finally, we load all images into the phase retriever
         try:
+            assert os.path.isdir(self.dirname), Exception(f"{self.dirname} is not a directory")
             self.beam_name = self.retriever.load_dataset(self.dirname, ftype=self.entries.GetValue("ext"))
 
             # We show the important images through the plots
             self._show_dataset()
+            # We find the beam-windows with the size given by the entries.
+            self.find_beams()
             self.entries.GetButton("center").Enable()
             self.entries.GetButton("autoadjust").Enable()
-        except:
-            error_dialog = wx.MessageDialog(self, f"Selected directory does not "
-                                                  f"contain polarimetric images.  "
-                                                  f"{self.entries.GetValue('ext')}",
-                                            style=wx.ICON_ERROR | wx.OK)
-            error_dialog.ShowModal()
+        except Exception as e:
+            if not silent:
+                error_dialog = wx.MessageDialog(self, f"Error loading data in  "
+                                                      f"{self.entries.GetValue('ext').upper()} "
+                                                      f"format\n\n{e}",
+                                                style=wx.ICON_ERROR | wx.OK)
+                error_dialog.ShowModal()
 
     def _show_dataset(self):
         # Irradiance plots with the rectangle indicating where exactly the window is
         # located.
-        # np.save("irradiance.npy", self.retriever.irradiance)
         self.plotter.set_imshow("RAW Irradiance", self.retriever.irradiance, cmap="gray")
+
+    def find_beams(self):
+        configs = self.entries.GetValues()
+        window_size = configs["window_size"]
+        window_sizeR = configs["window_sizeR"]
+        self.retriever.config(dim=window_size)
+        top, bottom = self.retriever.center_window()
+        rect_center = top[0] + window_size // 2, top[1] + window_size // 2
+        topR, bottomR = self.retriever.center_window(ref_beam_size=window_sizeR)
+        if topR is None:
+            topR = [0, 0]
+        rect_centerR = topR[0] + window_sizeR // 2, topR[1] + window_sizeR // 2
+
+        self.entries.SetValue(window_center=[str(x) for x in rect_center],
+                              window_centerR=[str(x) for x in rect_centerR])
+        self.updated_old_entries()
+
+        self.hasStokes = True  # if center_window success, stokes are ready
+        self._reconfig()
+        self.entries.GetButton("swap").Enable()
 
     # def _plot_irradiance(self):
     #     self.plotter.set_imshow("Cropped irradiance", self.retriever.cropped_irradiance,
     #                             cmap="gray", roi=self.roi)
 
     def _plot_stokes(self):
+        if not self.hasStokes:
+            return
         s0M = None
         isnew = []
         for idx, stokes_image in enumerate(self.retriever.get_stokes()):
@@ -499,10 +596,15 @@ class wxGUI(wx.Frame):
             self.plotter.set_colorbar("Cropped Stokes", share=(0, 1, 2, 3))
 
     def _plot_bandwidth(self):
+        if not self.hasSpectrum:
+            return
         a_ft_log = np.log10(self.retriever.a_ft)
         self.plotter.set_imshow("Spectrum", a_ft_log, cmap="viridis")
 
-    def update_results(self, Ex, Ey, Ez):
+    def update_results(self, z=0):
+        if not self.finished:
+            return
+        Ex, Ey, Ez = self.propagator.propagate_field_to(z)
         cmap_ph = "hsv"
         self.plotter.set_imshow("Results", abs(Ex), title="$|E_x|$",
                                 shape=(3, 2), num=1, cmap="gray", roi=self.roi)
@@ -519,6 +621,9 @@ class wxGUI(wx.Frame):
         self.plotter.set_imshow("Results", np.angle(Ez), title="$\phi_z$",
                                 shape=(3, 2), num=6, cmap=cmap_ph,
                                 vmin=-np.pi, vmax=np.pi, roi=self.roi)
+
+    def updated_old_entries(self):
+        self.old_entries = {k: v for k, v in self.entries.GetValues().items()}
 
 
 if __name__ == "__main__":

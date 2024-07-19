@@ -187,7 +187,8 @@ class SinglePhaseRetriever():
             # Irradiance not yet computed
             self._compute_irradiance()
 
-        irradiance = self.images[0]["Irr"] + self.irradiance
+        irr_ = self.images[0].get("Irr", 0)
+        irradiance = irr_ + self.irradiance
         win_size = self.get("dim")
         if ref_beam_size is not None:  # ignoring MAIN region of interest
             if not self.cropped:
@@ -215,8 +216,8 @@ class SinglePhaseRetriever():
     def align_polarimetric_images(self):
         """Align the polarimetric images to the reference image."""
         if not self.images:
-            raise Exception("Images not yet loaded")
-            _ = self.load_dataset()
+            print("Images not yet loaded")
+            return
         if not self["rect"]:
             raise ValueError("Reference region not yet specified.")
 

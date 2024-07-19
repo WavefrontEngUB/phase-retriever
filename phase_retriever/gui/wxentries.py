@@ -53,9 +53,9 @@ class ButtonsPane(wx.Panel):
         self.button = button = wx.Button(self, label="Search directory",
                                          size=button_size)
         self.cent_butt = centbut = wx.Button(self, label="Center beam",
-                                             size=button_size_large)
+                                             size=button_size)
         self.swap_butt = swapbut = wx.Button(self, label="Swap beams",
-                                             size=button_size_small)
+                                             size=button_size)
         self.auto_butt = autobut = wx.Button(self, label="Check bandwidth",
                                              size=button_size)
         self.ret_butt = ret_butt = wx.Button(self, label="Begin retrieval",
@@ -63,14 +63,14 @@ class ButtonsPane(wx.Panel):
         self.export_butt = export_butt = wx.Button(self, label="Export results",
                                                    size=button_size)
 
-        sizerC = wx.BoxSizer(wx.HORIZONTAL)
-        sizerC.Add(centbut, 0, wx.CENTRE)
-        sizerC.Add(swapbut, 0, wx.CENTRE)
+        # sizerC = wx.BoxSizer(wx.HORIZONTAL)
+        # sizerC.Add(centbut, 0, wx.CENTRE)
+        # sizerC.Add(swapbut, 0, wx.CENTRE)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(button, 0, wx.CENTRE)
-        sizer.Add(sizerC, 0, wx.CENTRE)
-        # sizer.Add(centbut, 0, wx.CENTRE)
+        sizer.Add(swapbut, 0, wx.CENTRE)
+        sizer.Add(centbut, 0, wx.CENTRE)
         sizer.Add(autobut, 0, wx.CENTRE)
         sizer.Add(ret_butt, 0, wx.CENTRE)
         sizer.Add(export_butt, 0, wx.CENTRE)

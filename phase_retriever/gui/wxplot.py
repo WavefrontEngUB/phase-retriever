@@ -70,13 +70,21 @@ class Plot(wx.Panel):
 class PlotsNotebook(wx.Panel):
     def __init__(self, parent, id=wx.ID_ANY):
         super().__init__(parent, id=id)
-        self.nb = aui.AuiNotebook(self, agwStyle=aui.AUI_NB_TOP | aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE | aui.AUI_NB_SCROLL_BUTTONS)
+        self.init()
+
+    def init(self):
+        self.nb = aui.AuiNotebook(self,
+                                  agwStyle=aui.AUI_NB_TOP | aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_TAB_MOVE | aui.AUI_NB_SCROLL_BUTTONS)
         sizer = wx.BoxSizer()
         sizer.Add(self.nb, 1, wx.EXPAND)
         self.SetSizer(sizer)
-
         self.pages = {}
-        
+
+    def clean(self):
+        for pg in range(len(self.pages), 0, -1):
+            self.nb.RemovePage(pg-1)
+        self.pages = {}
+
     def add(self, name, select=False):
         if name in self.pages:
             raise NameError(f"Page with name {name} already exists!")

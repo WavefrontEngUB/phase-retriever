@@ -50,7 +50,6 @@ class FocalPropagator():
             return I
 
     def propagate_field_to(self, z):
-
         if (isinstance(self["Ex"], np.ndarray) and isinstance(self["Ey"], np.ndarray)
                 and isinstance(self["Ez"], np.ndarray)):
             phase = 2j*np.pi*z*self.wz

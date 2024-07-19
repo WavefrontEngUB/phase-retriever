@@ -32,6 +32,7 @@ def get_polarimetric_names(folder, pol_keys={0:"a0", 1:"a45", 2:"a90",
     polarimetric_sets = {}
     pol_idx = None  # just an initialization
     z_idx = None  # just an initialization
+    beam_name = ''
     for fname in filenames:
         # Try to get the fname and ftype. If not divisible, get out
         try:
