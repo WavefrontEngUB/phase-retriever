@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='phase_retriever',
-    version='0.1.3',
+    version='0.1.4',
     long_description=open('README.md').read(),
     description="Program to retrieve the phase of an optic field based on Fineup's algorithm.",
     url='https://github.com/kramos966/phase-retriever',
