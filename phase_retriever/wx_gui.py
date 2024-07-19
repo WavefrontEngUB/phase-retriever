@@ -8,6 +8,7 @@ import numpy as np
 import json
 import multiprocessing as mp
 
+from .gui.error_dialog import MyExceptionHook
 from .gui.wxplot import PlotsNotebook, LabelPlotsNotebook
 from .gui.wxentries import wxEntryPanel
 # from .gui.wxexplore import DataExplorer
@@ -69,6 +70,8 @@ class wxGUI(wx.Frame):
 
         self.init()
         self.Centre()
+
+        sys.excepthook = MyExceptionHook
 
         self.propagator = FocalPropagator()
 
