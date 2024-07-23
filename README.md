@@ -13,8 +13,11 @@ Fineup's backpropagation.
         ```
      - Or, **alternatively**, using virtualenv:
         ```
-        python3 -m venv phase_retriever
-        source phase_retriever/bin/activate phase_retriever
+        mkdir my_phase_retriever_dir  # optional
+        cd my_phase_retriever_dir     # optional
+        python -m venv phase_retriever_env
+        .\phase_retriever_env\Scripts\activate  # If Windows
+        source phase_retriever_env/bin/activate phase_retriever_env  # If linux
         ```
 
 * Install via pip+GitHub
@@ -56,7 +59,7 @@ usage: python -m phase_retriever [path=<path>|get_test_data=<path>|demo|test] [-
 Options:                                                                                 
   path:           Opens the program with the dataset in the specified path.              
   get_test_data:  Copies the test dataset on the current directory                       
-                  or in the specified in the optional <path>.                            
+                  or in the specified optional <path>.                            
   demo=N:         Launches the program with a test dataset already loaded.
                   N: 1 or 'empty' -> Simulated data ; 2 -> Experimental data.
                   *It can be combined with get_test_data.*
