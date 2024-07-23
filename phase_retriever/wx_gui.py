@@ -229,7 +229,7 @@ class wxGUI(wx.Frame):
                 self.retriever["rectR"] = [topR, bottomR]
                 self.plotter.set_rectangle("RAW Irradiance", topR, widthR, widthR,
                                            color="red")
-                self._plot_stokes()
+                self._reconfig()
 
             if widthR == 0:
                 self.entries.GetButton("swap").Disable()
@@ -286,19 +286,12 @@ class wxGUI(wx.Frame):
         if self.retriever.images[0].get("Irr", None) is not None:
             self.retriever.align_polarimetric_images()
 
-        # Adjust the phase origin
-        self.retriever.select_phase_origin()
-        phase_origin = self.retriever.options["origin"]
-        self.entries.SetValue(phase_origin=[str(x) for x in phase_origin])
-        self.updated_old_entries()
-
         # Replot everything
         self.hasStokes = True
         self._reconfig()
         self._show_dataset()
 
-        self.entries.GetButton("swap").Enable()
-
+        # self.entries.GetButton("swap").Enable()
         # self.plotter.select_page("Cropped Stokes")
 
     def OnSwap(self, event):
@@ -315,12 +308,24 @@ class wxGUI(wx.Frame):
         self._reconfig()
 
     def OnAutoadjust(self, event):
-        self.retriever.compute_bandwidth()
-        bw = self.retriever.options["bandwidth"]
-
-        # Set the autoadjusted values to the entry panel
-        self.entries.SetValue(bandwidth=bw)
+        # Adjust the phase origin
+        self.retriever.select_phase_origin()
+        phase_origin = self.retriever.options["origin"]
+        self.entries.SetValue(phase_origin=[str(x) for x in phase_origin])
         self.updated_old_entries()
+
+        if self.entries.GetValues()["bandwidth"] == 0:
+            # If not set yet, let's estimate a bandwidth
+            self.retriever.compute_bandwidth()
+
+            bw = self.retriever.options["bandwidth"]
+
+            # Set the autoadjusted values to the entry panel
+            self.entries.SetValue(bandwidth=bw)
+            self.updated_old_entries()
+
+        else:  # If it's already set, lets just show it
+            self.retriever._compute_spectrum()
 
         # Replot everything
         self.hasStokes = True
@@ -542,7 +547,8 @@ class wxGUI(wx.Frame):
             self._show_dataset()
             # We find the beam-windows with the size given by the entries.
             self.find_beams()
-            self.entries.GetButton("center").Enable()
+            if self.retriever.images[0].get("Irr", None) is not None:
+                self.entries.GetButton("center").Enable()
             self.entries.GetButton("autoadjust").Enable()
         except Exception as e:
             if not silent:
@@ -555,7 +561,8 @@ class wxGUI(wx.Frame):
     def _show_dataset(self):
         # Irradiance plots with the rectangle indicating where exactly the window is
         # located.
-        self.plotter.set_imshow("RAW Irradiance", self.retriever.irradiance, cmap="gray")
+        self.plotter.set_imshow("RAW Irradiance", self.retriever.irradiance,
+                                cmap="gray")
 
     def find_beams(self):
         configs = self.entries.GetValues()

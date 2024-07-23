@@ -52,11 +52,11 @@ class ButtonsPane(wx.Panel):
 
         self.button = button = wx.Button(self, label="Search directory",
                                          size=button_size)
-        self.cent_butt = centbut = wx.Button(self, label="Center beam",
-                                             size=button_size)
         self.swap_butt = swapbut = wx.Button(self, label="Swap beams",
                                              size=button_size)
-        self.auto_butt = autobut = wx.Button(self, label="Check bandwidth",
+        self.cent_butt = centbut = wx.Button(self, label="Align images",
+                                             size=button_size)
+        self.auto_butt = autobut = wx.Button(self, label="Calculate bandwidth",
                                              size=button_size)
         self.ret_butt = ret_butt = wx.Button(self, label="Begin retrieval",
                                              size=button_size)
@@ -108,15 +108,15 @@ class wxEntryPanel(wx.Panel):
         pgrid.Append(wx.propgrid.EnumProperty("Input files extension", name="ext",
                                               choices=wx.propgrid.PGChoices(choices["ext"])))
         pgrid.Append(wx.propgrid.PropertyCategory("Beam location"))
-        pgrid.Append(wx.propgrid.IntProperty("Window size", name="window_size",
+        pgrid.Append(wx.propgrid.IntProperty("Main ROI size", name="window_size",
                                              value=DEFAULT_WINDOWSIZE))
-        pgrid.Append(wx.propgrid.ArrayStringProperty("Window center",
+        pgrid.Append(wx.propgrid.ArrayStringProperty("Main ROI center",
                                                      name="window_center",
                                                      value=["0", "0"]))
-        pgrid.Append(wx.propgrid.ArrayStringProperty("Ref. center",
+        pgrid.Append(wx.propgrid.ArrayStringProperty("Auxiliar center",
                                                      name="window_centerR",
                                                      value=["0", "0"]))
-        pgrid.Append(wx.propgrid.IntProperty("Ref. size", name="window_sizeR",
+        pgrid.Append(wx.propgrid.IntProperty("Auxiliar size", name="window_sizeR",
                                              value=DEFAULT_WINDOWSIZE_R))
         pgrid.Append(wx.propgrid.PropertyCategory("Measurement properties"))
         pgrid.Append(wx.propgrid.FloatProperty("Wavelength (um)", name="lambda",

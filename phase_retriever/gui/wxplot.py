@@ -25,6 +25,7 @@ class Plot(wx.Panel):
 
         # Dict to contain and access all the drawn patches in the current figure.
         self.patches = {}
+        self.legends = {}
 
     def draw_circle(self, position, r, color="green"):
         """Draw a circle with centre at the given coordinates with radius r."""
@@ -44,17 +45,31 @@ class Plot(wx.Panel):
         """Draw a rectangle at a given position with width w and height h."""
 
         label = "rectangle_" + color
+        legend_text = "Beam" if color == "green" else "Aux."
+
         if not label in self.patches:
+            ax = self.figure.axes[0]
             rect = self.patches[label] = Rectangle((0, 0), 1, 1, color=color, fill=True,
                                                        alpha=0.2)
-            self.figure.axes[0].add_patch(rect)
+            ax.add_patch(rect)
+
+            ann = self.legends[label] = ax.annotate(legend_text, (0, 0), horizontalalignment='center',
+                                                    fontsize=12, color=color)
         else:
             rect = self.patches[label]
+            ann = self.legends[label]
         # We transform the coordinates of the rectangle, as position is assumed to be its center,
         # while matplotlib requires its position from the lower left corner.
         x_llc, y_llc = position[1], position[0]
         # Set its new coordinates, width and height
         rect.set(width=w, height=h, x=x_llc, y=y_llc)
+        ann.set_position((x_llc+w/2, y_llc if y_llc > 12*3 else y_llc+h))  # fontsize=12
+
+        if w == 0:
+            ann.set_text("")
+        else:
+            ann.set_text(legend_text)
+
         self.canvas.draw()
         self.canvas.flush_events()
 

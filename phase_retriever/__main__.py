@@ -36,25 +36,23 @@ def print_help(error_code=0, epilog=''):
 
     program_cmd = f"python -m {sys.modules[__name__].__package__}"
 
-    print(f"Description: {PROGRAM_NAME} is a GUI powered software to retrieve the phase of a "
-          f"highly focused electromagnetic field.\nThe program requires the six "
-          f"polarimetric images recorded at two planes perpendical to the optical "
-          f"axis\nand separated some distance nearby the focus.\n"
-          f"It also calculates the electric field longitudinal component.")
+    print(f"Description: {PROGRAM_NAME} is a GUI powered software to retrieve the phase of\n"
+          f"a highly focused electromagnetic field. The program requires the six polarimetric\n"
+          f"images recorded at two planes perpendical to the optical axis and separated some\n"
+          f"distance nearby the focus. It also calculates the electric field longitudinal component.")
     print(f"")
-    print(f"usage: {program_cmd} [path=<path>|download_data=<path>|demo|test] [-h|--help]")
+    print(f"usage: {program_cmd} [path=<path>|get_test_data=<path>|demo|test] [-h|--help]")
     print(f"")
     print(f"Options:")
-    print(f"  path:           Set the path to the dataset. If not set, the program will "
-          f"will search data in the current directory.")
-    print(f"  download_data:  Downloads the test dataset on the current directory "
-          f"or in the specified in the optional <path>.")
+    print(f"  path:           Opens the program with the dataset in the specified path.")
+    print(f"  get_test_data:  Copies the test dataset on the current directory \n"
+          f"                  or in the specified in the optional <path>.")
     print(f"  demo=N:         Launches the program with a test dataset already loaded.\n"
           f"                  N: 1 or 'empty' -> Simulated data ; 2 -> Experimental data.\n"
-          f"                  *It can be combined with download_data.*")
-    print(f"  test:           Run the test suite.")
+          f"                  *It can be combined with get_test_data.*")
+    print(f"  test:           Runs the unit test suite.")
     print(f"")
-    print(f"  -h, --help:     Show this help message.")
+    print(f"  -h, --help:     Shows this help message.")
     print(f"")
     print(epilog)
 
@@ -89,7 +87,7 @@ if __name__ == "__main__":
                 print_help(-1, "Demo number must be an integer.")
             data_dir = os.path.join(test_data_dir, "experimental" if demo_num == 2
                                                    else "simulated")
-        elif arg.startswith("download_data"):
+        elif arg.startswith("get_test_data"):
             DOWNLOAD_FLAG = True
             download_path = arg.split("=")[1] if '=' in arg else '.'
         elif arg.startswith("path"):
