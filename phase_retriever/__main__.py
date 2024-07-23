@@ -46,7 +46,7 @@ def print_help(error_code=0, epilog=''):
     print(f"Options:")
     print(f"  path:           Opens the program with the dataset in the specified path.")
     print(f"  get_test_data:  Copies the test dataset on the current directory \n"
-          f"                  or in the specified in the optional <path>.")
+          f"                  or in the specified optional <path>.")
     print(f"  demo=N:         Launches the program with a test dataset already loaded.\n"
           f"                  N: 1 or 'empty' -> Simulated data ; 2 -> Experimental data.\n"
           f"                  *It can be combined with get_test_data.*")

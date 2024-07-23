@@ -116,14 +116,14 @@ The `phase_retriever_dataset` looks like this and it is what is expected:
         └───testRad_z2_aLev.png
 ```
 
-Since all different images are taken in different time slots and  
+Since all different images are taken in different time slots and
 they probably are taken using different analysers
-(just a polarizer, quarter waveplate plus polarizer, nothing), and 
-any other reasons (like laser fluctuations, etc.), the images can be 
+(just a polarizer, a quarter waveplate plus a polarizer, nothing), and
+any other reasons (like laser fluctuations, etc.), the images can be
 slightly under or overexposed in comparison with the others.
-To avoid this issue that can affect the Stokes parameters, 
+To avoid this issue that can affect the Stokes parameters calculation,
 the program includes a feature to mitigate it.
-It is able to recognize an auxiliary light spot 
+It is able to recognize an auxiliary spotlight
 from a second beam directly drove from the laser,
 without passing through the analysers, even skiping the microscope stage.
 Check the paper for more details about this feature [missing cite].
@@ -160,18 +160,23 @@ The default ones are appropriate for the test dataset.
 
 Two rectangles will be overlaid on the total irradiance image. The green one shows 
 the region of interest (ROI) where all calculation are done, and the red one shows 
-the region where the auxiliar beam is located. You can fine adjust the main beam ROI and the 
-axiliar beam ROI by modifying the paramenters on the config panel. Also, you can swap 
-the ROIs by clicking on the **`Swap beams`** button. Alternativelly, you can set the 
-Auxiliar size to 0 to remove the auxiliar beam's ROI. (More details about the auxiliar 
-beam can be found in ...)
+the region where the auxiliar beam is located. You can fine adjust the main and auxiliar
+beam ROIs by modifying the paramenters on the config panel. Also, you can swap 
+that ROIs just by clicking on the **`Swap beams`** button. Alternatively,
+you can remove the auxiliar beam's ROI just by setting the 
+Auxiliar size to 0.
+(More details about why auxiliar beam interesting for, in the data section above or
+in the paper [missing cite])
 
-Polarimetric images can be missaligned due to the analizers rotation or any other reason.
-To correct this, click on **`Align images`**. This option is only available if the 
+Polarimetric images can be missaligned due to the analyzers rotation or any other reason.
+To correct this, click on **`Align images`**. 
+The program will find the cross correlation between every polarimetric image 
+with the experimental total irradiance image.
+Therefore, this option is only available if the 
 experimental total irradiance images are included in the dataset.
 
-Click on **`Calculate bandwidth`** to find the appropriated bandwidth, 
-if not manually set before.
+Click on **`Calculate/Check bandwidth`** to find the appropriated bandwidth, 
+if not manually set before, and to check if that bandwidth is correct.
 Then, the `Spectrum` tab is created and actived now, 
 where the bandwidth is overlaid in yellow on the spectrum image.
 
@@ -180,14 +185,17 @@ Now, the `MSE` tab is created to plot the progress (it gets stuck at the beginni
 Finally, the `Results` tab is created and filled with the three complex components 
 of the field.
 
-You can `Save` the configuration parameters, `Load` a previous configuration, and 
-**`Export`** the results in the `File` menu.
+Finally, you can **`Export results`** in a `.npz`  NumPy file where
+the three complex field components are under keys `Ex`, `Ey` and `Ez`
+with `dtype=np.complex128` and `shape=(mainROI,mainROI)`.
 
-The configuration is stored in a JSON file with the parameters.
-Find an example within the test datasets.
 
-The export file is a `.npz`  NumPy file with the three complex field components:
-`Ex`, `Ey` and `Ez` with `dtype=np.complex128`.
+In addition, you can `Save` the configuration parameters and
+`Load` a previous configuration.
+Where the configuration is stored in a JSON file with the parameters.
+Find examples within the test datasets.
+When a JSON file is in a dataset, the program will load it automatically
+with the images.
 
 
 #### Tests

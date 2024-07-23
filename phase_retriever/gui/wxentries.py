@@ -56,7 +56,7 @@ class ButtonsPane(wx.Panel):
                                              size=button_size)
         self.cent_butt = centbut = wx.Button(self, label="Align images",
                                              size=button_size)
-        self.auto_butt = autobut = wx.Button(self, label="Calculate bandwidth",
+        self.auto_butt = autobut = wx.Button(self, label="Calculate/Check bandwidth",
                                              size=button_size)
         self.ret_butt = ret_butt = wx.Button(self, label="Begin retrieval",
                                              size=button_size)
@@ -135,7 +135,7 @@ class wxEntryPanel(wx.Panel):
                                                name="bandwidth",
                                                value=DEFAULT_BANDWIDTH))
         pgrid.Append(wx.propgrid.PropertyCategory("Exploration"))
-        pgrid.Append(wx.propgrid.IntProperty("ROI size", name="roi",
+        pgrid.Append(wx.propgrid.IntProperty("Showing ROI (just for plots)", name="roi",
                                              value=DEFAULT_ROISIZE))
         # pgrid.Append(wx.propgrid.IntProperty("Z position", name="z_exp",
         #                                      value=0))
