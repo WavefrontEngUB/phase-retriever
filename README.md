@@ -16,7 +16,8 @@ Fineup's backpropagation.
         mkdir my_phase_retriever_dir  # optional
         cd my_phase_retriever_dir     # optional
         python -m venv phase_retriever_env
-        source phase_retriever_env/bin/activate phase_retriever
+        .\phase_retriever_env\Scripts\activate  # If Windows
+        source phase_retriever_env/bin/activate phase_retriever_env  # If linux
         ```
 
 * Install via pip+GitHub
