@@ -59,7 +59,7 @@ usage: python -m phase_retriever [path=<path>|get_test_data=<path>|demo|test] [-
 Options:                                                                                 
   path:           Opens the program with the dataset in the specified path.              
   get_test_data:  Copies the test dataset on the current directory                       
-                  or in the specified in the optional <path>.                            
+                  or in the specified optional <path>.                            
   demo=N:         Launches the program with a test dataset already loaded.
                   N: 1 or 'empty' -> Simulated data ; 2 -> Experimental data.
                   *It can be combined with get_test_data.*
