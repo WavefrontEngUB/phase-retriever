@@ -13,6 +13,8 @@ Fineup's backpropagation.
         ```
      - Or, **alternatively**, using virtualenv:
         ```
+        mkdir my_phase_retriever_dir  # optional
+        cd my_phase_retriever_dir     # optional
         python3 -m venv phase_retriever
         source phase_retriever/bin/activate phase_retriever
         ```
