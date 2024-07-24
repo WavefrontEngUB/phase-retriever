@@ -96,10 +96,10 @@ if __name__ == "__main__":
             print_help(1, "Unknown option")
 
     if DOWNLOAD_FLAG:
-        from distutils.dir_util import copy_tree
+        import shutil
         if os.path.isdir(download_path):  # If exists, make a subdirectory
             download_path = os.path.join(download_path, 'phase_retriever_dataset')
-        copy_tree(test_data_dir, download_path)
+        shutil.copytree(test_data_dir, download_path)
         if DEMO_FLAG:
             data_dir = download_path
         else:
