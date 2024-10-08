@@ -615,17 +615,17 @@ class wxGUI(wx.Frame):
         cmap_ph = "hsv"
         self.plotter.set_imshow("Results", abs(Ex), title="$|E_x|$",
                                 shape=(3, 2), num=1, cmap="gray", roi=self.roi)
-        self.plotter.set_imshow("Results", np.angle(Ex), title="$\phi_x$",
+        self.plotter.set_imshow("Results", np.angle(Ex), title=r"$\phi_x$",
                                 shape=(3, 2), num=2, cmap=cmap_ph,
                                 vmin=-np.pi, vmax=np.pi, roi=self.roi)
         self.plotter.set_imshow("Results", abs(Ey), title="$|E_y|$",
                                 shape=(3, 2), num=3, cmap="gray", roi=self.roi)
-        self.plotter.set_imshow("Results", np.angle(Ey), title="$\phi_y$",
+        self.plotter.set_imshow("Results", np.angle(Ey), title=r"$\phi_y$",
                                 shape=(3, 2), num=4, cmap=cmap_ph,
                                 vmin=-np.pi, vmax=np.pi, roi=self.roi)
         self.plotter.set_imshow("Results", abs(Ez)**2, title="$|E_z|$",
                                 shape=(3, 2), num=5, cmap="gray", roi=self.roi)
-        self.plotter.set_imshow("Results", np.angle(Ez), title="$\phi_z$",
+        self.plotter.set_imshow("Results", np.angle(Ez), title="r$\phi_z$",
                                 shape=(3, 2), num=6, cmap=cmap_ph,
                                 vmin=-np.pi, vmax=np.pi, roi=self.roi)
 

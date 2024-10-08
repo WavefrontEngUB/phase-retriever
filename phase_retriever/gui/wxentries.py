@@ -2,7 +2,7 @@ import wx
 import wx.propgrid
 
 DEFAULT_WAVELENGTH = 0.52  # um
-DEFAULT_PIXELSIZE = 0.043  # um
+DEFAULT_PIXELSIZE = 0.037  # um
 DEFAULT_NITERATIONS = 120  # iterations
 DEFAULT_WINDOWSIZE = 256   # px
 DEFAULT_WINDOWSIZE_R = 64  # px

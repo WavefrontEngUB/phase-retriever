@@ -97,8 +97,19 @@ if __name__ == "__main__":
 
     if DOWNLOAD_FLAG:
         import shutil
+        from datetime import datetime
+
         if os.path.isdir(download_path):  # If exists, make a subdirectory
-            download_path = os.path.join(download_path, 'phase_retriever_dataset')
+            download_path += datetime.now().strftime('_%y%m%d_%H%M')
+        count = 1
+        if os.path.isdir(download_path):
+            while True:
+                candidate = f"{download_path}_{count}"
+                if not os.path.isdir(candidate):
+                    download_path = candidate
+                    break
+                count += 1
+
         shutil.copytree(test_data_dir, download_path)
         if DEMO_FLAG:
             data_dir = download_path
