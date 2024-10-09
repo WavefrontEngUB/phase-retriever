@@ -56,7 +56,7 @@ class ButtonsPane(wx.Panel):
                                              size=button_size)
         self.cent_butt = centbut = wx.Button(self, label="Align images",
                                              size=button_size)
-        self.auto_butt = autobut = wx.Button(self, label="Calculate/Check bandwidth",
+        self.auto_butt = autobut = wx.Button(self, label="Check bandwidth",
                                              size=button_size)
         self.ret_butt = ret_butt = wx.Button(self, label="Begin retrieval",
                                              size=button_size)

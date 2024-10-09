@@ -198,7 +198,7 @@ class wxGUI(wx.Frame):
                 self.retriever["dim"] = width
                 rect_center = values["window_center"]
                 top = [int(i) - width // 2 for i in rect_center]
-                self.plotter.set_rectangle("RAW Irradiance", top, width, width)
+                self.plotter.set_rectangle("Irradiance (full size)", top, width, width)
 
         elif key == "window_center":
             rect_center = new_value
@@ -214,7 +214,7 @@ class wxGUI(wx.Frame):
                 # Set the correct values in the entry widget
                 self.entries.SetValue(window_center=center)
                 # Finally, set the rectangle visible on screen
-                self.plotter.set_rectangle("RAW Irradiance", top, width, width)
+                self.plotter.set_rectangle("Irradiance (full size)", top, width, width)
                 self._plot_stokes()
 
         elif key == "window_sizeR":
@@ -227,7 +227,7 @@ class wxGUI(wx.Frame):
                 topR = [int(i) - widthR // 2 for i in rect_centerR]
                 bottomR = [int(i) + widthR // 2 for i in rect_centerR]
                 self.retriever["rectR"] = [topR, bottomR]
-                self.plotter.set_rectangle("RAW Irradiance", topR, widthR, widthR,
+                self.plotter.set_rectangle("Irradiance (full size)", topR, widthR, widthR,
                                            color="red")
                 self._reconfig()
 
@@ -251,7 +251,7 @@ class wxGUI(wx.Frame):
                 # Set the correct values in the entry widget
                 self.entries.SetValue(window_centerR=centerR)
                 # Finally, set the rectangle visible on screen
-                self.plotter.set_rectangle("RAW Irradiance", topR, widthR, widthR,
+                self.plotter.set_rectangle("Irradiance (full size)", topR, widthR, widthR,
                                            color="red")
                 self._plot_stokes()
 
@@ -486,8 +486,8 @@ class wxGUI(wx.Frame):
         self._plot_stokes()
 
         # Draw the rectangles and circle specifiying the region of interest
-        self.plotter.set_rectangle("RAW Irradiance", top, width, width)
-        self.plotter.set_rectangle("RAW Irradiance", topR, widthR, widthR, color="red")
+        self.plotter.set_rectangle("Irradiance (full size)", top, width, width)
+        self.plotter.set_rectangle("Irradiance (full size)", topR, widthR, widthR, color="red")
 
         # Draw the bandwidth if so
         if self.hasSpectrum:
@@ -561,7 +561,7 @@ class wxGUI(wx.Frame):
     def _show_dataset(self):
         # Irradiance plots with the rectangle indicating where exactly the window is
         # located.
-        self.plotter.set_imshow("RAW Irradiance", self.retriever.irradiance,
+        self.plotter.set_imshow("Irradiance (full size)", self.retriever.irradiance,
                                 cmap="gray")
 
     def find_beams(self):
@@ -625,7 +625,7 @@ class wxGUI(wx.Frame):
                                 vmin=-np.pi, vmax=np.pi, roi=self.roi)
         self.plotter.set_imshow("Results", abs(Ez)**2, title="$|E_z|$",
                                 shape=(3, 2), num=5, cmap="gray", roi=self.roi)
-        self.plotter.set_imshow("Results", np.angle(Ez), title="r$\phi_z$",
+        self.plotter.set_imshow("Results", np.angle(Ez), title=r"$\phi_z$",
                                 shape=(3, 2), num=6, cmap=cmap_ph,
                                 vmin=-np.pi, vmax=np.pi, roi=self.roi)
 

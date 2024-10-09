@@ -155,7 +155,7 @@ folder with the polarimetric images.
 Notice that the images might not be shown in the folder dialog (Windows issue), 
 but the program should find them there.
 Then, the total irradiance calculated using the polarimetric images is 
-shown in the main panel on the `RAW irradiance` tab, while the ROI of the Stokes 
+shown in the main panel on the `Irradiance (full size)` tab, while the ROI of the Stokes 
 images are shown in the `Cropped Stokes`.
 
 You can set the specific parameters of your data on the config panel.
@@ -168,7 +168,7 @@ beam ROIs by modifying the paramenters on the config panel. Also, you can swap
 that ROIs just by clicking on the **`Swap beams`** button. Alternatively,
 you can remove the auxiliar beam's ROI just by setting the 
 Auxiliar size to 0.
-(More details about why auxiliar beam interesting for, in the data section above or
+(Find more details about why auxiliar beam is interesting for in the data section above or
 in the paper [missing cite])
 
 Polarimetric images can be missaligned due to the analyzers rotation or any other reason.
@@ -178,7 +178,7 @@ with the experimental total irradiance image.
 Therefore, this option is only available if the 
 experimental total irradiance images are included in the dataset.
 
-Click on **`Calculate/Check bandwidth`** to find the appropriated bandwidth, 
+Click on **`Check bandwidth`** to find the appropriated bandwidth, 
 if not manually set before, and to check if that bandwidth is correct.
 Then, the `Spectrum` tab is created and actived now, 
 where the bandwidth is overlaid in yellow on the spectrum image.
