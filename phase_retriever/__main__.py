@@ -89,7 +89,7 @@ if __name__ == "__main__":
                                                    else "simulated")
         elif arg.startswith("get_test_data"):
             DOWNLOAD_FLAG = True
-            download_path = arg.split("=")[1] if '=' in arg else '.'
+            download_path = arg.split("=")[1] if '=' in arg else os.getcwd()
         elif arg.startswith("path"):
             data_dir = arg.split("=")[1] if '=' in arg else ''
         else:
@@ -100,7 +100,11 @@ if __name__ == "__main__":
         from datetime import datetime
 
         if os.path.isdir(download_path):  # If exists, make a subdirectory
-            download_path += datetime.now().strftime('_%y%m%d_%H%M')
+            print(download_path, os.getcwd())
+            if download_path == os.getcwd():
+                download_path = os.path.join(download_path, "phase_retriever_dataset")
+            else:
+                download_path += datetime.now().strftime('_%y%m%d_%H%M')
         count = 1
         if os.path.isdir(download_path):
             while True:
