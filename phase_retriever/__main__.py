@@ -100,7 +100,6 @@ if __name__ == "__main__":
         from datetime import datetime
 
         if os.path.isdir(download_path):  # If exists, make a subdirectory
-            print(download_path, os.getcwd())
             if download_path == os.getcwd():
                 download_path = os.path.join(download_path, "phase_retriever_dataset")
             else:
