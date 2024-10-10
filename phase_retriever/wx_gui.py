@@ -9,6 +9,7 @@ import numpy as np
 import json
 import multiprocessing as mp
 
+from phase_retriever.constants import MSE_THRESHOLD
 from .gui.error_dialog import MyExceptionHook
 from .gui.wxplot import PlotsNotebook, LabelPlotsNotebook
 from .gui.wxentries import wxEntryPanel
@@ -58,11 +59,15 @@ class GUIRetriever(PhaseRetriever):
     def update_function(self, plot):
         # TODO: Update manually so not to lock the whole interface...
         axes = plot.figure.axes
+        ylim = max([max(self.mse[i]) if self.mse[i] else 1 for i in range(2)])
         for i, ax in enumerate(axes):
             line = ax.lines[0]
             line.set_data(range(len(self.mse[i])), self.mse[i])
             ax.relim()
+            ax.set_xlim(0, self.options.get("n_iter", 100))
+            ax.set_ylim(MSE_THRESHOLD, ylim)
             ax.autoscale_view()
+            ax.set_title(f"MSE for {['X', 'Y'][i]} component")
         plot.canvas.draw()
 
 class wxGUI(wx.Frame):
@@ -264,6 +269,7 @@ class wxGUI(wx.Frame):
         self.updated_old_entries()
 
     def OnLoadClick(self, event):
+        self.button_waiting("search")
         if not self._ensures_reload():
             return
 
@@ -280,8 +286,10 @@ class wxGUI(wx.Frame):
             return
         dialog.Destroy()
         self._load_data()
+        self.button_ready("search")
 
     def OnCenter(self, event):
+        self.button_waiting("center")
         # Align the polarimetric images
         if self.retriever.images[0].get("Irr", None) is not None:
             self.retriever.align_polarimetric_images()
@@ -291,10 +299,13 @@ class wxGUI(wx.Frame):
         self._reconfig()
         self._show_dataset()
 
+        self.button_ready("center")
+
         # self.entries.GetButton("swap").Enable()
         # self.plotter.select_page("Cropped Stokes")
 
     def OnSwap(self, event):
+        self.button_waiting("swap")
         values = self.entries.GetValues()
 
         topR, bottomR = values["window_center"]
@@ -306,8 +317,10 @@ class wxGUI(wx.Frame):
         if self.retriever.images[0].get("Irr", None) is not None:
             self.retriever.align_polarimetric_images()
         self._reconfig()
+        self.button_ready("swap")
 
     def OnAutoadjust(self, event):
+        self.button_waiting("autoadjust")
         # Adjust the phase origin
         self.retriever.select_phase_origin()
         phase_origin = self.retriever.options["origin"]
@@ -337,8 +350,10 @@ class wxGUI(wx.Frame):
         # Enable the begin button and disable the Search button
         self.entries.GetButton("begin").Enable()
         # self.entries.GetButton("search").Disable()
+        self.button_ready("autoadjust")
 
     def OnRetrieve(self, event):
+        self.button_waiting("begin")
         self.entries.GetButton("center").Disable()
         self.entries.GetButton("swap").Disable()
         self.entries.GetButton("autoadjust").Disable()
@@ -353,20 +368,25 @@ class wxGUI(wx.Frame):
             ax1 = fig.add_subplot(1, 2, 1)
             ax2 = fig.add_subplot(1, 2, 2)
             axes = [ax1, ax2]
-            axes[0].set_title("MSE X component (loading...)")
-            axes[1].set_title("MSE Y component (loading...)")
 
         # First, we need to clear all possible lines
-        for ax in axes:
+        for i, ax in enumerate(axes):
             ax.clear()
             ax.plot([], [])
+            ax.set_title(f"MSE {['X', 'Y'][i]} component (loading...)")
+            ax.set_xlim(0, self.entries.GetValue("n_iter", 100))
+            ax.set_ylim(MSE_THRESHOLD, 0.15)
+            ax.set_xlabel("Iterations")
+            ax.set_ylabel("MSE")
+
         # Then, we call the retriever to commence the process
         self.retriever.config(mode="vectorial")  # self.entries.GetValue("mode")
         self.retriever.config(pixel_size=self.entries.GetValue("pixel_size"))
         self.retriever.retrieve(args=(plot,), monitor=False)
         wx.CallLater(delta_t, self.retriever.monitor_process, plot)
         wx.CallLater(delta_t, self.OnCheckCompletion)
-        self.plotter.select_page("MSE")
+        wx.CallLater(delta_t*1.5, self.plotter.select_page, "MSE")
+
 
     def OnCheckCompletion(self, event=None):
         if self.retriever.finished:
@@ -392,6 +412,7 @@ class wxGUI(wx.Frame):
         self.update_results(z=0)
         self.plotter.set_colorbar("Results", share=(3, 5, 1))
         self.plotter.select_page("Results")
+        self.button_ready("begin", enable_ignore=True)
         self.entries.GetButton("begin").Disable()
         self.entries.GetButton("export").Enable()
 
@@ -439,6 +460,7 @@ class wxGUI(wx.Frame):
         self._reconfig()
 
     def OnExport(self, event):
+        self.button_waiting("export")
         try:
             Ex, Ey, Ez = self.propagator.propagate_field_to(0)
             data = {"Ex":Ex, "Ey":Ey, "Ez": Ez}
@@ -449,6 +471,7 @@ class wxGUI(wx.Frame):
                                style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
                                wildcard="*.npz") as save_dialog:
                 if save_dialog.ShowModal() == wx.ID_CANCEL:
+                    self.button_ready("export")
                     return
                 path = save_dialog.GetPath()
                 if not path.endswith(".npz"):
@@ -458,6 +481,7 @@ class wxGUI(wx.Frame):
             dialog = wx.MessageDialog(self, "Could not export any recovered data",
                     style=wx.OK | wx.CENTRE | wx.ICON_ERROR)
             dialog.ShowModal()
+        self.button_ready("export")
 
     def OnQuit(self, event):
         self.Close()
@@ -614,23 +638,41 @@ class wxGUI(wx.Frame):
         Ex, Ey, Ez = self.propagator.propagate_field_to(z)
         cmap_ph = "hsv"
         self.plotter.set_imshow("Results", abs(Ex), title="$|E_x|$",
-                                shape=(3, 2), num=1, cmap="gray", roi=self.roi)
+                                shape=(3, 2), num=1, cmap="gray", roi=self.roi,
+                                pixel_size=self.entries.GetValue("pixel_size"))
         self.plotter.set_imshow("Results", np.angle(Ex), title=r"$\phi_x$",
                                 shape=(3, 2), num=2, cmap=cmap_ph,
-                                vmin=-np.pi, vmax=np.pi, roi=self.roi)
+                                vmin=-np.pi, vmax=np.pi, roi=self.roi,
+                                pixel_size=self.entries.GetValue("pixel_size"))
         self.plotter.set_imshow("Results", abs(Ey), title="$|E_y|$",
-                                shape=(3, 2), num=3, cmap="gray", roi=self.roi)
+                                shape=(3, 2), num=3, cmap="gray", roi=self.roi,
+                                pixel_size=self.entries.GetValue("pixel_size"))
         self.plotter.set_imshow("Results", np.angle(Ey), title=r"$\phi_y$",
                                 shape=(3, 2), num=4, cmap=cmap_ph,
-                                vmin=-np.pi, vmax=np.pi, roi=self.roi)
+                                vmin=-np.pi, vmax=np.pi, roi=self.roi,
+                                pixel_size=self.entries.GetValue("pixel_size"))
         self.plotter.set_imshow("Results", abs(Ez)**2, title="$|E_z|$",
-                                shape=(3, 2), num=5, cmap="gray", roi=self.roi)
+                                shape=(3, 2), num=5, cmap="gray", roi=self.roi,
+                                pixel_size=self.entries.GetValue("pixel_size"))
         self.plotter.set_imshow("Results", np.angle(Ez), title=r"$\phi_z$",
                                 shape=(3, 2), num=6, cmap=cmap_ph,
-                                vmin=-np.pi, vmax=np.pi, roi=self.roi)
+                                vmin=-np.pi, vmax=np.pi, roi=self.roi,
+                                pixel_size=self.entries.GetValue("pixel_size"))
 
     def updated_old_entries(self):
         self.old_entries = {k: v for k, v in self.entries.GetValues().items()}
+
+    def button_waiting(self, name):
+        button = self.entries.GetButton(name)
+        if button:
+            button.Disable()
+            button.SetLabel(f"{button.GetLabel()} (loading...)")
+
+    def button_ready(self, name, enable_ignore=False):
+        button = self.entries.GetButton(name)
+        if button:
+            button.Enable() if not enable_ignore else None
+            button.SetLabel(button.GetLabel().replace(" (loading...)", ""))
 
 
 if __name__ == "__main__":

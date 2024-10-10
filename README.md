@@ -128,7 +128,7 @@ To avoid this issue that can affect the Stokes parameters calculation,
 the program includes a feature to mitigate it.
 It is able to recognize an auxiliary spotlight
 from a second beam directly drove from the laser,
-without passing through the analysers, even skiping the microscope stage.
+without passing through the analysers, even skipping the microscope stage.
 Check the paper for more details about this feature [missing cite].
 
 
@@ -161,15 +161,15 @@ images are shown in the `Cropped Stokes`.
 You can set the specific parameters of your data on the config panel.
 The default ones are appropriate for the test dataset.
 
-Two rectangles will be overlaid on the total irradiance image. The green one shows 
-the region of interest (ROI) where all calculation are done, and the red one shows 
-the region where the auxiliar beam is located. You can fine adjust the main and auxiliar
-beam ROIs by modifying the paramenters on the config panel. Also, you can swap 
-that ROIs just by clicking on the **`Swap beams`** button. Alternatively,
-you can remove the auxiliar beam's ROI just by setting the 
-Auxiliar size to 0.
-(Find more details about why auxiliar beam is interesting for in the data section above or
-in the paper [missing cite])
+Two rectangles will be overlaid on the total irradiance image.
+The green one shows the region of interest (ROI) where all calculation are done, 
+and the red one shows the region where the auxiliary beam is located.
+You can fine adjust the main and auxiliary beam ROIs by modifying the parameters 
+on the config panel. Also, you can swap that ROIs just by clicking on the 
+**`Swap beams`** button. Alternatively, you can remove the auxiliary beam's ROI 
+just by setting the Auxiliary size to 0.
+(Find more details about why auxiliary beam is interesting for in 
+the data section above or in the paper [missing cite])
 
 Polarimetric images can be missaligned due to the analyzers rotation or any other reason.
 To correct this, click on **`Align images`**. 

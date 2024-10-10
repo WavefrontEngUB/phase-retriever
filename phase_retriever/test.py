@@ -21,7 +21,7 @@ def test_basics():
     # Load dataset
     print("Dataset load... ", end="")
     module_dir = os.path.dirname(__file__)
-    test_data = os.path.join(module_dir, 'test_dataset', "simulated")
+    test_data = os.path.join(module_dir, 'phase_retriever_dataset', "simulated")
     try:
         beam_name = retriever.load_dataset(test_data)
         print(OK)

@@ -3,7 +3,7 @@
     "ext": 0,
     "lamb": 0.52,
     "n_iter": 120,
-    "path": "c:\\users\\dmaluenda\\onedrive - universitat de barcelona\\research\\phaseretriever\\phase_retriever\\test_dataset\\simulated",
+    "path": "c:\\users\\dmaluenda\\onedrive - universitat de barcelona\\research\\phaseretriever\\phase_retriever\\phase_retriever_dataset\\simulated",
     "phase_origin": [
         "119",
         "122"

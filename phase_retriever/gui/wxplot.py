@@ -115,7 +115,7 @@ class PlotsNotebook(wx.Panel):
         self.nb.SetSelection(self.pages[name])
 
     def set_imshow(self, name, image, title='', cmap="viridis",
-                   shape=(1, 1), num=1, vmin=None, vmax=None, roi=None):
+                   shape=(1, 1), num=1, vmin=None, vmax=None, roi=None, pixel_size=None):
         new = False
         if name not in self.pages:
             fig = self.add(name).figure
@@ -144,8 +144,21 @@ class PlotsNotebook(wx.Panel):
         ax_img.set_extent([0, roix, roiy, 0])
         ax_img.set_data(im_roi)
         ax_img.set_clim(vmin, vmax)
-        ax.set_xticks([0, int(roix/4), int(roix/2), int(roix*3/4), roix])
-        ax.set_yticks([0, int(roiy/4), int(roiy/2), int(roiy*3/4), roiy])
+        if pixel_size:
+            labels_um = [f"${i * pixel_size:.1f}$" for i in
+                     [-roix / 2, -roix / 4, 0, roix / 4, roix / 2]]
+            ax.set_xticks([0, int(roix/4), int(roix/2), int(roix*3/4), roix],
+                          labels=labels_um)
+            ax.set_yticks([0, int(roiy/4), int(roiy/2), int(roiy*3/4), roiy],
+                          labels=labels_um)
+            ax.set_xlabel(r"$x\,(\mu m)$")
+            ax.set_ylabel(r"$y\,(\mu m)$")
+        else:
+            ax.set_xticks([0, int(roix/4), int(roix/2), int(roix*3/4), roix])
+            ax.set_yticks([0, int(roiy/4), int(roiy/2), int(roiy*3/4), roiy])
+            ax.set_xlabel(r"$x$ (in pixels)")
+            ax.set_ylabel(r"$y$ (in pixels)")
+
         if title:
             text_color = 'white' if (name=="Results" and num%2==1) else 'black'
             ax.annotate(title, (0.95, 0.07), xycoords='axes fraction',

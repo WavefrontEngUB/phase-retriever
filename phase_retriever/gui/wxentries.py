@@ -1,13 +1,7 @@
 import wx
 import wx.propgrid
 
-DEFAULT_WAVELENGTH = 0.52  # um
-DEFAULT_PIXELSIZE = 0.037  # um
-DEFAULT_NITERATIONS = 120  # iterations
-DEFAULT_WINDOWSIZE = 256   # px
-DEFAULT_WINDOWSIZE_R = 64  # px
-DEFAULT_BANDWIDTH = 0      # px
-DEFAULT_ROISIZE = 64       # px
+from phase_retriever.constants import *
 
 choices = { "ext": ["png", "npy"],
             "mode": ["vectorial", "scalar"]
@@ -113,10 +107,10 @@ class wxEntryPanel(wx.Panel):
         pgrid.Append(wx.propgrid.ArrayStringProperty("Main ROI center",
                                                      name="window_center",
                                                      value=["0", "0"]))
-        pgrid.Append(wx.propgrid.ArrayStringProperty("Auxiliar center",
+        pgrid.Append(wx.propgrid.ArrayStringProperty("Auxiliary center",
                                                      name="window_centerR",
                                                      value=["0", "0"]))
-        pgrid.Append(wx.propgrid.IntProperty("Auxiliar size", name="window_sizeR",
+        pgrid.Append(wx.propgrid.IntProperty("Auxiliary size", name="window_sizeR",
                                              value=DEFAULT_WINDOWSIZE_R))
         pgrid.Append(wx.propgrid.PropertyCategory("Measurement properties"))
         pgrid.Append(wx.propgrid.FloatProperty("Wavelength (um)", name="lambda",
@@ -135,7 +129,7 @@ class wxEntryPanel(wx.Panel):
                                                name="bandwidth",
                                                value=DEFAULT_BANDWIDTH))
         pgrid.Append(wx.propgrid.PropertyCategory("Exploration"))
-        pgrid.Append(wx.propgrid.IntProperty("Showing ROI (just for plots)", name="roi",
+        pgrid.Append(wx.propgrid.IntProperty("Display ROI", name="roi",
                                              value=DEFAULT_ROISIZE))
         # pgrid.Append(wx.propgrid.IntProperty("Z position", name="z_exp",
         #                                      value=0))
@@ -165,6 +159,7 @@ class wxEntryPanel(wx.Panel):
                 }
 
     def GetButton(self, name):
+        button = None
         if name == "search":
             button = self.polEntry.button
         elif name == "center":
@@ -200,9 +195,10 @@ class wxEntryPanel(wx.Panel):
             ptr = self.iter[name]
             self.pgrid.SetPropertyValue(ptr, props[name])
 
-    def GetValue(self, name):
+    def GetValue(self, name, default=None):
         if name not in self.iter:
-            raise NameError(f"Property {name} does not exist")
+            print(f"Property {name} does not exist")
+            return default
         ptr = self.iter[name]
         value = self.pgrid.GetPropertyValue(ptr)
         if name in choices.keys():

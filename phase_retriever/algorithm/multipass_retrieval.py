@@ -2,11 +2,14 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import matplotlib.pyplot as plt
+
+from phase_retriever.constants import MSE_THRESHOLD
+
 fft2 = np.fft.fft2
 ifft2 = np.fft.ifft2
 fftshift = np.fft.fftshift
 
-def multi(H, niter, phi0, *As, verbose=False, queue=None, real=None, imag=None, eps=0.01):
+def multi(H, niter, phi0, *As, verbose=False, queue=None, real=None, imag=None, eps=MSE_THRESHOLD):
     """Multipass phase retrieval. Estimates the phase that best approximates
     the experimental moduli obtained in propagation. The method assumes
     plane wave spectrum propagation, with its benefits and limitations.

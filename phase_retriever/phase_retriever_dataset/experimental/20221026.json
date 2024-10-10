@@ -3,13 +3,13 @@
     "ext": 0,
     "lamb": 0.52,
     "n_iter": 120,
-    "path": "C:\\Users\\dmaluenda\\OneDrive - Universitat de Barcelona\\Research\\PhaseRetriever\\phase_retriever\\test_dataset\\experimental",
+    "path": "phase_retriever_dataset\\experimental",
     "phase_origin": [
         "127",
         "135"
     ],
     "pixel_size": 0.037,
-    "roi": 64,
+    "roi": 128,
     "window_center": [
         "655",
         "381"
