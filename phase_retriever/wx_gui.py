@@ -385,7 +385,7 @@ class wxGUI(wx.Frame):
         self.retriever.retrieve(args=(plot,), monitor=False)
         wx.CallLater(delta_t, self.retriever.monitor_process, plot)
         wx.CallLater(delta_t, self.OnCheckCompletion)
-        wx.CallLater(delta_t*1.5, self.plotter.select_page, "MSE")
+        wx.CallLater(delta_t*2, self.plotter.select_page, "MSE")
 
 
     def OnCheckCompletion(self, event=None):
