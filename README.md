@@ -120,7 +120,7 @@ The `phase_retriever_dataset` looks like this and it is what is expected:
 ```
 
 Since all different images are taken in different time slots and
-they probably are taken using different analysers
+they probably are taken using different analyzers
 (just a polarizer, a quarter waveplate plus a polarizer, nothing), and
 any other reasons (like laser fluctuations, etc.), the images can be
 slightly under or overexposed in comparison with the others.
