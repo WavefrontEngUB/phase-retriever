@@ -86,7 +86,7 @@ the polarimetric images.
 The image filenames are in the format `beamName_z<z-plane>_a<polarization>.png`,
 where `<z-plane>` is the z-position of the plane in micrometers 
 (notice that absolute positions are not required, just the relative distances between planes).
-The `<polarization>` is related to the polarization of the analyzer, and it can be 
+The `<polarization>` is related to the polarization kind of the analyzer, and it can be 
 `0`, `45`, `90`, `135`, `Dex`, `Lev`; for the total irradiance images the `Irr` 
 suffix is used.
 
@@ -94,8 +94,8 @@ The `phase_retriever_dataset` looks like this and it is what is expected:
 ```
 └───phase_retriever_dataset                
     ├───experimental       # Some experimental data to play with
-    │   ├───20221026.json                  # Config file (to be able to recall the default parameters)
-    │   ├───20221026_retrieved.npz         # Already retrieved file (just for testing)
+    │   ├───20221026.json                  # [Optional] Config file (to set specific default parameters)
+    │   ├───20221026_retrieved.npz         # [Not requiered] Already retrieved file (just for testing)
     │   ├───20221026_s2_pRad_a0_z0.png     # Vertical polarization, first plane
     │   ├───20221026_s2_pRad_a0_z2.png     # Vertical polarization, second plane (2 microns behind)
     │   ├───20221026_s2_pRad_a135_z0.png   # Antidiagonal polarization, first plane
@@ -106,12 +106,12 @@ The `phase_retriever_dataset` looks like this and it is what is expected:
     │   ├───20221026_s2_pRad_a90_z2.png    # Horizontal polarization, second plane
     │   ├───20221026_s2_pRad_aDex_z0.png   # Circular Right polarization, first plane
     │   ├───20221026_s2_pRad_aDex_z2.png   # Circular Right polarization, second plane
-    │   ├───20221026_s2_pRad_aIrr_z0.png   # (optional) Total irradiance, first plane
-    │   ├───20221026_s2_pRad_aIrr_z2.png   # (optional) Total irradiance, second plane
+    │   ├───20221026_s2_pRad_aIrr_z0.png   # [Optional] Total irradiance, first plane
+    │   ├───20221026_s2_pRad_aIrr_z2.png   # [Optional] Total irradiance, second plane
     │   ├───20221026_s2_pRad_aLev_z0.png   # Circular Left polarization, first plane
     │   └───20221026_s2_pRad_aLev_z2.png   # Circular Left polarization, second plane
     │
-    └───simulated       # Some simulated data to play with
+    └───simulated       # Some simulated data to play with  (same structure)
         ├───testRad.json
         ├───testRad_retrieved.npz
         ├───testRad_z0_a0.png
