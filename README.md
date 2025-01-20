@@ -212,7 +212,10 @@ to run the unit test suite.
 At the end, you can compare the retrieved field with the one stored in the test dataset, 
 considered as the ground truth.
 
-## Troubleshooting
+## Troubleshooting...
+
+
+#### ...while installaling
 
 We have detected some troubles with wyPython on Linux distributions (and also on MacOs X). It is usually fixed just by installing the next prerequisites before installing this `phase-retriever` module.
 
@@ -224,3 +227,12 @@ Be sure that the target environment is activated before installing the prerequis
     sudo apt-get install upgrade
 
 Then, you can install `phase-retriever` in the current environment as described in the first section.
+
+#### ...in data management
+
+If polarimetric images are not well aligned after pressing button `Align images`, an alternative has to be found. A good but tedious option is to manually align the images prior to loading them in the program.
+
+
+#### ...while running
+
+If results deviate from your expected outcomes or clearly show artifacts, it is likely due to an incorrect bandwidth setting. Therefore, manually adjust the bandwidth in the configuration pane, ensuring that the shaded area aligns with the signal and avoids noisy frequencies, in the Spectrum tab.
