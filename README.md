@@ -1,6 +1,24 @@
 # Phase retriever
 A Python GUI for the implementation of the phase retrieval algorithm, based on 
-Fineup's backpropagation. 
+Fineup's backpropagation.
+
+A full description can be found at the next publication:
+
+> ## Characterization of highly focused vector fields using phase retrieval: a practical guide
+>
+> ***Applied Optics***, Vol. 64, Issue 4, pp. 938-943 (2025)
+> 
+> <sup>DOI: [**10.1364/AO.544562**](https://doi.org/10.1364/AO.544562) ; Received: **14 Oct 2024** ; Accepted: 12 Dec 2024 ; Posted: 28 Jan 2025</sup>
+>
+> **David Maluenda Niubó<sup>1,2</sup>, Marcos Pérez-Aviñoa<sup>1</sup>, Rosario Martínez-Herrero<sup>3</sup>, and Artur Carnicer<sup>1</sup>**
+>
+> *<sup>1</sup>Universitat de Barcelona (UB), Facultat de Física, Departament de Física aplicada, Martí i Franquès 1, 08028, Barcelona, Spain.*
+>
+> *<sup>2</sup>Institut de Nanociència i Nanotecnologia de la Universitat de Barcelona (IN2UB), 08028 Barcelona, Spain.*
+>
+> *<sup>3</sup>Universidad Complutense de Madrid (UCM), Departamento de Óptica, Ciudad Universitaria, 28040, Madrid, Spain.*
+>
+> **Abstract**: A precise knowledge of the polarization state of light is crucial in technologies that involve the generation and application of structured light fields. The implementation of efficient methods aimed at determining and characterizing polarization states and, more importantly, at any spatial location at a low expense is thus mandatory. Here, we introduce a new characterization method, which relies on a rather convenient description of electric fields without neglecting their three-dimensional nature. This method is indeed particularly suitable for highly focused fields, which exhibit important polarization contributions along their propagation direction in the neighborhood of the focal region, i.e., contributions out of the planes transverse to the optical axis, conventionally used to specify the polarization state of these fields. As it is shown, the method allows us to extract information about the three field components at relatively low computational and experimental costs. Furthermore, it also allows to characterize the polarization state of the field in a rather simple manner. To check the feasibility and reliability of the method, we have determined both analytically and experimentally the local polarization states for a series of benchmark input fields with it, finding an excellent agreement between theory and experiment.
 
 ## Installation and run
 
