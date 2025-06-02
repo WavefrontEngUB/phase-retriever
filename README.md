@@ -1,5 +1,5 @@
 # Phase retriever
-Phase retrieval GUI to fully characterize highly focused beam via the Fineup algorithm
+Phase retrieval GUI to fully characterize highly focused beams via the Fineup algorithm
 
 A full description of the method can be found at the next publication:
 
