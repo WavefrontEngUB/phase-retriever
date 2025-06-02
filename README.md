@@ -1,8 +1,7 @@
 # Phase retriever
-A Python GUI for the implementation of the phase retrieval algorithm, based on 
-Fineup's backpropagation.
+Phase retrieval GUI to fully characterize highly focused beam via the Fineup algorithm
 
-A full description can be found at the next publication:
+A full description of the method can be found at the next publication:
 
 > ## Characterization of highly focused vector fields using phase retrieval: a practical guide
 >
